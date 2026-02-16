@@ -4,7 +4,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required # decorators = funcao que envolve outra. Nesse caso se nao tiver logado bloqueia acesso.
 from tasks.models import Task # importando o modelo de task para poder filtrar as tasks por usuario.
-from tasks.forms import TaskForm # importando o formulario de task para poder usar no kanban.
+from tasks.forms import TaskForm, RegistrationForm # importando o form da task e o de registro.
 from django.utils import timezone # importando timezone para poder usar no createTask e respeita o timezone do projeto.
 from django.http import JsonResponse # importando JsonResponse para poder retornar um json no updateTaskStatus.
 import json
@@ -27,7 +27,7 @@ def userLogout(request):
 
 def registro(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST) # criando variavel que recebe os dados que serao enviados
+        form = RegistrationForm(request.POST)
         if form.is_valid(): # valida senha forte/ username unico e senhas iguais
             user = form.save() # salvando o form que e o proprio usuario no banco
             login(request, user) # faz com que se for valido ele ja logue automaticamente no sistema
@@ -35,7 +35,7 @@ def registro(request):
         else:
             messages.error(request, 'Erro ao registrar usuário. Verifique se as senhas são iguais e se o nome de usuário é único.') # caso haja um erro no registro, mostra uma mensagem de erro.
     else:
-        form = UserCreationForm() # caso os dados sejam invalidos, cria um novo form vazio.
+        form = RegistrationForm()
     return render(request, 'users/registro.html', {'form': form}) # renderizando o template registro.html e passando o form como contexto.
 
 @login_required
