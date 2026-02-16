@@ -1,0 +1,162 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Task Monitoring</title>
+    <link rel="stylesheet" href="{% static 'css/kanban.css' %}">
+</head>
+<body>
+    <header class="bar">
+        <h1>Task Monitoring</h1>
+        <div class="top-actions">
+            <span class="user">Olá, {{ request.user.username }} </span>
+            <a class="btn" href="javascript:void(0)" onclick="openCreateTask()">Nova Task</a>
+            <a class="btn" href="{% url 'logout' %}">Sair</a>
+        </div>
+    </header>
+    <main class="wrap">
+        <section class="col">
+            <h2>A Fazer</h2>
+            <div class="list">
+                {% for task in todo %}
+                    <article class="card clickable"
+                        onclick="openUpdateTask(this)"
+                        data-id="{{ task.id }}"
+                        data-title="{{ task.title|escape }}"
+                        data-description="{{ task.description|escape }}"
+                        data-status="{{ task.status }}"
+                        data-start-time="{{ task.start_time|date:'Y-m-d\TH:i' }}"
+                        data-end-time="{{ task.end_time|date:'Y-m-d\TH:i' }}"
+                        data-update-url="/kanban/updateTask/{{ task.id }}/">
+                        <div class="title">{{ task.title }}</div>
+                        <div class="desc">{{ task.description }}</div>
+                        <div class="meta">Criada em {{ task.created_at|date:"d/m/Y H:i" }}</div>
+                    </article>
+                {% empty %}
+                    <article class="card"><div class="desc">Sem itens</div></article>
+                {% endfor %}
+            </div>
+        </section>
+        <section class="col">
+            <h2>Fazendo</h2>
+            <div class="list">
+                {% for task in doing %}
+                    <article class="card clickable"
+                        onclick="openUpdateTask(this)"
+                        data-id="{{ task.id }}"
+                        data-title="{{ task.title|escape }}"
+                        data-description="{{ task.description|escape }}"
+                        data-status="{{ task.status }}"
+                        data-start-time="{{ task.start_time|date:'Y-m-d\\TH:i' }}"
+                        data-end-time="{{ task.end_time|date:'Y-m-d\\TH:i' }}"
+                        data-update-url="/kanban/updateTask/{{ task.id }}/">
+                        <div class="title">{{ task.title }}</div>
+                        <div class="desc">{{ task.description }}</div>
+                        <div class="meta">Início {{ task.start_time|date:"d/m/Y H:i" }}</div>
+                    </article>
+                {% empty %}
+                    <article class="card"><div class="desc">Sem itens</div></article>
+                {% endfor %}
+            </div>
+        </section>
+        <section class="col">
+            <h2>Finalizado</h2>
+            <div class="list">
+                {% for task in done %}
+                    <article class="card clickable"
+                        onclick="openUpdateTask(this)"
+                        data-id="{{ task.id }}"
+                        data-title="{{ task.title|escape }}"
+                        data-description="{{ task.description|escape }}"
+                        data-status="{{ task.status }}"
+                        data-start-time="{{ task.start_time|date:'Y-m-d\\TH:i' }}"
+                        data-end-time="{{ task.end_time|date:'Y-m-d\\TH:i' }}"
+                        data-update-url="/kanban/updateTask/{{ task.id }}/">
+                        <div class="title">{{ task.title }}</div>
+                        <div class="desc">{{ task.description }}</div>
+                        <div class="meta">Fim {{ task.end_time|date:"d/m/Y H:i" }}</div>
+                    </article>
+                {% empty %}
+                    <article class="card"><div class="desc">Sem itens</div></article>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+    <div id="createTaskModal" class="modal" aria-hidden="true">
+        <div class="modal-backdrop" onclick="closeCreateTask()"></div>
+        <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <header class="modal-bar">
+                <h2 id="modalTitle">Nova Task</h2>
+                <button class="close" type="button" onclick="closeCreateTask()" aria-label="Fechar">✕</button>
+            </header>
+            <form class="modal-form" method="post" action="{% url 'createTask' %}">
+                {% csrf_token %}
+                <div class="field">
+                    <label for="title">Título</label>
+                    <input id="title" name="title" type="text" required>
+                </div>
+                <div class="field">
+                    <label for="description">Descrição</label>
+                    <textarea id="description" name="description"></textarea>
+                </div>
+                <div class="field">
+                    <label for="status">Status</label>
+                    <select id="status" name="status" required>
+                        <option value="todo">A Fazer</option>
+                        <option value="doing">Fazendo</option>
+                        <option value="done">Finalizado</option>
+                    </select>
+                </div>
+                <div class="actions">
+                    <button type="submit">Salvar</button>
+                    <a class="btn secondary" href="javascript:void(0)" onclick="closeCreateTask()">Cancelar</a>
+                </div>
+            </form>
+        </section>
+    </div>
+    <div id="updateTaskModal" class="modal" aria-hidden="true">
+        <div class="modal-backdrop" onclick="closeUpdateTask()"></div>
+        <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="updateModalTitle">
+            <header class="modal-bar">
+                <h2 id="updateModalTitle">Editar Task</h2>
+                <button class="close" type="button" onclick="closeUpdateTask()" aria-label="Fechar">✕</button>
+            </header>
+            <form id="updateTaskForm" class="modal-form" method="post" action="#">
+                {% csrf_token %}
+                <div class="field">
+                    <label for="utitle">Título</label>
+                    <input id="utitle" name="title" type="text" required>
+                </div>
+                <div class="field">
+                    <label for="udescription">Descrição</label>
+                    <textarea id="udescription" name="description"></textarea>
+                </div>
+                <div class="field">
+                    <label for="ustart_time">Início</label>
+                    <input id="ustart_time" name="start_time" type="datetime-local">
+                </div>
+                <div class="field">
+                    <label for="uend_time">Fim</label>
+                    <input id="uend_time" name="end_time" type="datetime-local">
+                </div>
+                <div class="field">
+                    <label for="ustatus">Status</label>
+                    <select id="ustatus" name="status" required>
+                        <option value="todo">A Fazer</option>
+                        <option value="doing">Fazendo</option>
+                        <option value="done">Finalizado</option>
+                    </select>
+                </div>
+                <div class="actions">
+                    <button type="submit">Salvar alterações</button>
+                    <a class="btn secondary" href="javascript:void(0)" onclick="closeUpdateTask()">Cancelar</a>
+                    <button id="deleteBtn" type="submit" class="btn danger">Excluir</button>
+                </div>
+            </form>
+        </section>
+    </div>
+    <script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>

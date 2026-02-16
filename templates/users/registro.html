@@ -1,0 +1,29 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Task Monitoring - registro</title>
+    <link rel="stylesheet" href="{% static 'css/registro.css' %}">
+</head>
+<body>
+    <main class="card">
+        <h1 style="text-align: center;">Task Monitoring</h1>
+        <h1>Criar conta</h1>
+        {% if messages %}
+            <div class="msgs">
+                {% for message in messages %}{{ message }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+            </div>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Registrar</button>
+        </form>
+        <div class="link">
+            <a href="/">Já tenho conta</a>
+        </div>
+    </main>
+</body>
+</html>

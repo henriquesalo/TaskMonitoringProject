@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Task Monitoring - login </title>
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+</head>
+<body>
+    <main class="card">
+        <h1 style="text-align: center;">Task Monitoring</h1>
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            <div class="field">
+                <label for="username">Usuário</label>
+                <input id="username" name="username" type="text" required autofocus>
+            </div>
+            <div class="field">
+                <label for="password">Senha</label>
+                <input id="password" name="password" type="password" required>
+            </div>
+            <div class="actions">
+                <button type="submit">Entrar</button>
+            </div>
+        </form>
+        <br>
+        <div class="link">
+            <a href="{% url 'registro' %}">Criar uma conta</a>
+        </div>
+    </main>
+</body>
+</html>
