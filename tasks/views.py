@@ -5,6 +5,8 @@ from django.contrib.auth.decorators import login_required # decorators = funcao 
 from tasks.models import Task # importando o modelo de task para poder filtrar as tasks por usuario.
 from tasks.forms import TaskForm # importando o formulario de task para poder usar no kanban.
 from django.utils import timezone # importando timezone para poder usar no createTask e respeita o timezone do projeto.
+from django.http import JsonResponse # importando JsonResponse para poder retornar um json no updateTaskStatus.
+import json
 
 def userLogin(request):
     if request.method == 'POST':
@@ -86,3 +88,13 @@ def finish_task(request, task_id):
     task.status = 'done' # definindo o status como done e movendo automaticamente para sua coluna.
     task.save()
     return redirect('kanban') # redireciona para a pagina do kanban.
+
+@login_required
+def updateTaskStatus(request, task_id):
+    if request.method == 'POST':
+        data = json.loads(request.body) # convertendo o corpo da req para python dict.
+        newStatus = data.get('status') # pegando o status enviado.
+        task = Task.objects.get(id=task_id, user=request.user) # pegando a task pelo id e restringindo para somente ao user que a criou.
+        task.status = newStatus # atualizando o status da task.
+        task.save() # salvando a task com o novo status no banco.
+        return JsonResponse({'success': True}) # retornando um json com sucesso.

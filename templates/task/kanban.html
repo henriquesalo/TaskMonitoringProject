@@ -19,7 +19,7 @@
     <main class="wrap">
         <section class="col">
             <h2>A Fazer</h2>
-            <div class="list">
+            <div class="list" data-status="todo">
                 {% for task in todo %}
                     <article class="card clickable"
                         onclick="openUpdateTask(this)"
@@ -29,7 +29,8 @@
                         data-status="{{ task.status }}"
                         data-start-time="{{ task.start_time|date:'Y-m-d\TH:i' }}"
                         data-end-time="{{ task.end_time|date:'Y-m-d\TH:i' }}"
-                        data-update-url="/kanban/updateTask/{{ task.id }}/">
+                        data-update-url="/kanban/updateTask/{{ task.id }}/"
+                        draggable="true">
                         <div class="title">{{ task.title }}</div>
                         <div class="desc">{{ task.description }}</div>
                         <div class="meta">Criada em {{ task.created_at|date:"d/m/Y H:i" }}</div>
@@ -41,7 +42,7 @@
         </section>
         <section class="col">
             <h2>Fazendo</h2>
-            <div class="list">
+            <div class="list" data-status="doing">
                 {% for task in doing %}
                     <article class="card clickable"
                         onclick="openUpdateTask(this)"
@@ -51,7 +52,8 @@
                         data-status="{{ task.status }}"
                         data-start-time="{{ task.start_time|date:'Y-m-d\\TH:i' }}"
                         data-end-time="{{ task.end_time|date:'Y-m-d\\TH:i' }}"
-                        data-update-url="/kanban/updateTask/{{ task.id }}/">
+                        data-update-url="/kanban/updateTask/{{ task.id }}/"
+                        draggable="true">
                         <div class="title">{{ task.title }}</div>
                         <div class="desc">{{ task.description }}</div>
                         <div class="meta">Início {{ task.start_time|date:"d/m/Y H:i" }}</div>
@@ -63,7 +65,7 @@
         </section>
         <section class="col">
             <h2>Finalizado</h2>
-            <div class="list">
+            <div class="list" data-status="done">
                 {% for task in done %}
                     <article class="card clickable"
                         onclick="openUpdateTask(this)"
@@ -73,7 +75,8 @@
                         data-status="{{ task.status }}"
                         data-start-time="{{ task.start_time|date:'Y-m-d\\TH:i' }}"
                         data-end-time="{{ task.end_time|date:'Y-m-d\\TH:i' }}"
-                        data-update-url="/kanban/updateTask/{{ task.id }}/">
+                        data-update-url="/kanban/updateTask/{{ task.id }}/"
+                        draggable="true">
                         <div class="title">{{ task.title }}</div>
                         <div class="desc">{{ task.description }}</div>
                         <div class="meta">Fim {{ task.end_time|date:"d/m/Y H:i" }}</div>
@@ -158,5 +161,6 @@
         </section>
     </div>
     <script src="{% static 'js/script.js' %}"></script>
+    <script src="{% static 'js/draganddrop.js' %}"></script>
 </body>
 </html>
