@@ -7,14 +7,14 @@ function closeCreateTask() {
 }
 
 function openUpdateTask(el) {
-    var modal = document.getElementById('updateTaskModal');
-    var form = document.getElementById('updateTaskForm');
-    var title = document.getElementById('utitle');
-    var description = document.getElementById('udescription');
-    var status = document.getElementById('ustatus');
-    var startInput = document.getElementById('ustart_time');
-    var endInput = document.getElementById('uend_time');
-    var deleteBtn = document.getElementById('deleteBtn');
+    const modal = document.getElementById('updateTaskModal');
+    const form = document.getElementById('updateTaskForm');
+    const title = document.getElementById('utitle');
+    const description = document.getElementById('udescription');
+    const status = document.getElementById('ustatus');
+    const startInput = document.getElementById('ustart_time');
+    const endInput = document.getElementById('uend_time');
+    const deleteBtn = document.getElementById('deleteBtn');
 
     form.setAttribute('action', el.dataset.updateUrl);
     title.value = el.dataset.title || '';
