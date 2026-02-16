@@ -34,6 +34,7 @@
                         <div class="title">{{ task.title }}</div>
                         <div class="desc">{{ task.description }}</div>
                         <div class="meta">Criada em {{ task.created_at|date:"d/m/Y H:i" }}</div>
+                        <div class="meta">Horas Trabalhadas: {{ task.worked_hours }}</div>
                     </article>
                 {% empty %}
                     <article class="card"><div class="desc">Sem itens</div></article>
@@ -57,6 +58,7 @@
                         <div class="title">{{ task.title }}</div>
                         <div class="desc">{{ task.description }}</div>
                         <div class="meta">Início {{ task.start_time|date:"d/m/Y H:i" }}</div>
+                        <div class="meta">Horas Trabalhadas: {{ task.worked_hours }}</div>
                     </article>
                 {% empty %}
                     <article class="card"><div class="desc">Sem itens</div></article>
@@ -80,6 +82,7 @@
                         <div class="title">{{ task.title }}</div>
                         <div class="desc">{{ task.description }}</div>
                         <div class="meta">Fim {{ task.end_time|date:"d/m/Y H:i" }}</div>
+                        <div class="meta">Horas Trabalhadas: {{ task.worked_hours }}</div>
                     </article>
                 {% empty %}
                     <article class="card"><div class="desc">Sem itens</div></article>

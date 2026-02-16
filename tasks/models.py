@@ -21,6 +21,13 @@ class Task(models.Model): # models.Model indicia a classe base que sabe salvar a
     start_time = models.DateTimeField(null=True, blank=True) # Criando coluna de data e hora de inicio onde o banco e o formulario aceitam nulo/vazio.
     end_time = models.DateTimeField(null=True, blank=True) # mesmo conceito de start_time.
     created_at = models.DateTimeField(auto_now_add=True) # Criando coluna de data e hora que o django automaticamente salva quando a task é criada.
+    worked_hours = models.FloatField(null=True, blank=True, default=0.0) # Criando coluna de horas trabalhadas que armazena a hora em float.
+
+    def worked_hours(self):
+        if self.start_time and self.end_time:
+            duration = self.end_time - self.start_time
+            return round(duration.total_seconds() / 3600, 2) # retornando as horas trabalhadas arredondadas para 2 casas decimais.
+        return 0.0
 
     def __str__(self):
         return self.title # Retorna o titulo da task quando chamada. Caso contrario retornaria Task object (1) no admin por exemplo.

@@ -7,6 +7,7 @@ from tasks.models import Task # importando o modelo de task para poder filtrar a
 from tasks.forms import TaskForm, RegistrationForm # importando o form da task e o de registro.
 from django.utils import timezone # importando timezone para poder usar no createTask e respeita o timezone do projeto.
 from django.http import JsonResponse # importando JsonResponse para poder retornar um json no updateTaskStatus.
+from datetime import datetime
 import json
 
 def userLogin(request):
@@ -99,10 +100,3 @@ def updateTaskStatus(request, task_id):
         task.status = newStatus # atualizando o status da task.
         task.save() # salvando a task com o novo status no banco.
         return JsonResponse({'success': True}) # retornando um json com sucesso.
-
-"""
-def forgotPassword(request):
-    if request.method == 'POST':
-        email = request.POST.get('email') # pegando o email do formulario e salvando na variavel email.
-        if User.objects.filter(email=email).exists(): # verificando se o email existe no banco.
-"""
