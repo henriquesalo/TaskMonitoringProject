@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages # importando messages para poder mostrar mensagens de erro no login/registro.
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required # decorators = funcao que envolve outra. Nesse caso se nao tiver logado bloqueia acesso.
@@ -17,7 +18,7 @@ def userLogin(request):
             login(request, user) # loga o usuario no sistema
             return redirect('kanban') # redireciona para a pagina do kanban.
         else:
-            messages.error(request, 'Erro ao fazer login. Credenciais inválidas.') # caso haja um erro no login, mostra uma mensagem de erro.
+            messages.error(request, 'Erro ao fazer login. Usuário ou senha inválidos.') # caso haja um erro no login, mostra uma mensagem de erro.
     return render(request, 'users/login.html') # renderizando o template login.html
     
 def userLogout(request):
@@ -32,7 +33,7 @@ def registro(request):
             login(request, user) # faz com que se for valido ele ja logue automaticamente no sistema
             return redirect('kanban') # redireciona para a pagina do kanban.
         else:
-            messages.error(request, 'Erro ao registrar usuário.') # caso haja um erro no registro, mostra uma mensagem de erro.
+            messages.error(request, 'Erro ao registrar usuário. Verifique se as senhas são iguais e se o nome de usuário é único.') # caso haja um erro no registro, mostra uma mensagem de erro.
     else:
         form = UserCreationForm() # caso os dados sejam invalidos, cria um novo form vazio.
     return render(request, 'users/registro.html', {'form': form}) # renderizando o template registro.html e passando o form como contexto.
@@ -98,3 +99,10 @@ def updateTaskStatus(request, task_id):
         task.status = newStatus # atualizando o status da task.
         task.save() # salvando a task com o novo status no banco.
         return JsonResponse({'success': True}) # retornando um json com sucesso.
+
+"""
+def forgotPassword(request):
+    if request.method == 'POST':
+        email = request.POST.get('email') # pegando o email do formulario e salvando na variavel email.
+        if User.objects.filter(email=email).exists(): # verificando se o email existe no banco.
+"""

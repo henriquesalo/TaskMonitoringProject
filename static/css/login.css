@@ -81,3 +81,9 @@ button:hover {
     text-decoration: none;
     font-size: 14px;
 }
+
+#msg {
+    font-size: 14px;
+    color: rgb(228, 75, 75);
+    list-style: none;
+}

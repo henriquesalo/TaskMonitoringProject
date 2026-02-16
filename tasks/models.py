@@ -17,6 +17,7 @@ class Task(models.Model): # models.Model indicia a classe base que sabe salvar a
         choices=STATUS_CHOICES,
         default='todo'
     )
+    email = models.EmailField(max_length=200) # Criando coluna de email com maximo de 200 caracteres.
     start_time = models.DateTimeField(null=True, blank=True) # Criando coluna de data e hora de inicio onde o banco e o formulario aceitam nulo/vazio.
     end_time = models.DateTimeField(null=True, blank=True) # mesmo conceito de start_time.
     created_at = models.DateTimeField(auto_now_add=True) # Criando coluna de data e hora que o django automaticamente salva quando a task é criada.
