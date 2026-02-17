@@ -16,6 +16,7 @@ document.querySelectorAll('.list').forEach(list => {
 
         this.appendChild(draggedCard);
         updateTaskStatus(taskId, newStatus);
+        location.reload();
     });
 });
 
@@ -29,7 +30,7 @@ function updateTaskStatus(taskId, newStatus) {
         body: JSON.stringify({
             status: newStatus,
         }),
-    })
+    });
 }
 
 function getCSRFToken() {

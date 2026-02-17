@@ -13,6 +13,7 @@
         <div class="top-actions">
             <span class="user">Olá, {{ request.user.username }} </span>
             <a class="btn" href="javascript:void(0)" onclick="openCreateTask()">Nova Task</a>
+            <a class="btn" href="{% url 'exportTasksExcel' %}" style="background-color: rgb(7, 159, 7);">Exportar Excel</a>
             <a class="btn" href="{% url 'logout' %}">Sair</a>
         </div>
     </header>
@@ -34,7 +35,7 @@
                         <div class="title">{{ task.title }}</div>
                         <div class="desc">{{ task.description }}</div>
                         <div class="meta">Criada em {{ task.created_at|date:"d/m/Y H:i" }}</div>
-                        <div class="meta">Horas Trabalhadas: {{ task.worked_hours }}</div>
+                        <div class="meta">Horas Trabalhadas: {{ task.worked_hours_formated }}</div>
                     </article>
                 {% empty %}
                     <article class="card"><div class="desc">Sem itens</div></article>
@@ -58,7 +59,7 @@
                         <div class="title">{{ task.title }}</div>
                         <div class="desc">{{ task.description }}</div>
                         <div class="meta">Início {{ task.start_time|date:"d/m/Y H:i" }}</div>
-                        <div class="meta">Horas Trabalhadas: {{ task.worked_hours }}</div>
+                        <div class="meta">Horas Trabalhadas: {{ task.worked_hours_formated }}</div>
                     </article>
                 {% empty %}
                     <article class="card"><div class="desc">Sem itens</div></article>
@@ -82,7 +83,7 @@
                         <div class="title">{{ task.title }}</div>
                         <div class="desc">{{ task.description }}</div>
                         <div class="meta">Fim {{ task.end_time|date:"d/m/Y H:i" }}</div>
-                        <div class="meta">Horas Trabalhadas: {{ task.worked_hours }}</div>
+                        <div class="meta">Horas Trabalhadas: {{ task.worked_hours_formated }}</div>
                     </article>
                 {% empty %}
                     <article class="card"><div class="desc">Sem itens</div></article>
@@ -164,6 +165,6 @@
         </section>
     </div>
     <script src="{% static 'js/script.js' %}"></script>
-    <script src="{% static 'js/draganddrop.js' %}"></script>
+    <script src="{% static 'js/draganddrop.js' %}?v=2"></script>
 </body>
 </html>

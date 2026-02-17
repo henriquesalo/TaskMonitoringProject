@@ -6,8 +6,9 @@ from django.contrib.auth.decorators import login_required # decorators = funcao 
 from tasks.models import Task # importando o modelo de task para poder filtrar as tasks por usuario.
 from tasks.forms import TaskForm, RegistrationForm # importando o form da task e o de registro.
 from django.utils import timezone # importando timezone para poder usar no createTask e respeita o timezone do projeto.
-from django.http import JsonResponse # importando JsonResponse para poder retornar um json no updateTaskStatus.
+from django.http import JsonResponse, HttpResponse # importando JsonResponse para poder retornar um json no updateTaskStatus e HttpResponse para poder enviar arquivos ao navegador.
 from datetime import datetime
+from openpyxl import Workbook # importando o Workbook que representa um arquivo excel.
 import json
 
 def userLogin(request):
@@ -98,5 +99,40 @@ def updateTaskStatus(request, task_id):
         newStatus = data.get('status') # pegando o status enviado.
         task = Task.objects.get(id=task_id, user=request.user) # pegando a task pelo id e restringindo para somente ao user que a criou.
         task.status = newStatus # atualizando o status da task.
+        if newStatus == 'doing' and not task.start_time:
+            task.start_time = timezone.now()
+        if newStatus == 'done' and not task.end_time:
+            task.end_time = timezone.now()
         task.save() # salvando a task com o novo status no banco.
         return JsonResponse({'success': True}) # retornando um json com sucesso.
+
+@login_required
+def exportTasksExcel(request):
+    workbook = Workbook() # criando um novo arquivo excel vazio.
+    worksheet = workbook.active # pegando a planilha ativa do arquivo excel.
+    worksheet.title = 'Taferas do Usuário ' + request.user.username # definindo o nome da planilha.
+
+    worksheet.append([
+        "Título", "Descrição", "Status", "Data de Criação", "Data de Conclusão", "Horas Trabalhadas"
+    ])
+
+    tasks = Task.objects.filter(user=request.user) # Pegando apenas as tasks do usuario logado e salvando numa variavel.
+    for task in tasks: # Para cada task do usuario logado, adiciona uma nova linha na planilha.
+        
+        hours = task.worked_hours_formated()
+        
+        worksheet.append([
+            task.title,
+            task.description,
+            task.status,
+            task.created_at.strftime("%d/%m/%Y %H:%M") if task.start_time else "", # se tiver start time, formata como dd/mm/yyyy HH:MM, senao, vazio.
+            task.end_time.strftime("%d/%m/%Y %H:%M") if task.end_time else "", # se tiver end time, formata como dd/mm/yyyy HH:MM, senao, vazio.
+            hours
+        ])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response['Content-Disposition'] = 'attachment; filename="tasks.xlsx"' # definindo o nome do arquivo excel que sera baixado.
+    workbook.save(response) # salvando o arquivo excel na resposta http.
+    return response # retornando a response http que é o arquivo excel para download.

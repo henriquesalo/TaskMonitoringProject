@@ -10,4 +10,5 @@ urlpatterns = [
     path('kanban/updateTask/<int:task_id>/', views.updateTask, name='updateTask'),
     path('kanban/deleteTask/<int:task_id>/', views.deleteTask, name='deleteTask'),
     path('kanban/updateTaskStatus/<int:task_id>/', views.updateTaskStatus, name='updateTaskStatus'),
+    path('kanban/exportTasks/', views.exportTasksExcel, name='exportTasksExcel'),
 ]

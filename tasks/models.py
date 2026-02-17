@@ -26,8 +26,15 @@ class Task(models.Model): # models.Model indicia a classe base que sabe salvar a
     def worked_hours(self):
         if self.start_time and self.end_time:
             duration = self.end_time - self.start_time
-            return round(duration.total_seconds() / 3600, 2) # retornando as horas trabalhadas arredondadas para 2 casas decimais.
-        return 0.0
+            return duration.total_seconds() / 3600 # retornando as horas trabalhadas em float.
+        return 0
+
+    def worked_hours_formated(self):
+        FloatHours = self.worked_hours() # obtendo as horas trabalhadas que foram calculadas em float.
+
+        hours = int(FloatHours) # convertendo as horas em inteiro.
+        minutes = int((FloatHours - hours) * 60) # convertendo os minutos em inteiro.
+        return f"{hours:02d}:{minutes:02d}" # retornando as horas em HH:MM formatados.
 
     def __str__(self):
         return self.title # Retorna o titulo da task quando chamada. Caso contrario retornaria Task object (1) no admin por exemplo.
