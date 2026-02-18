@@ -195,15 +195,14 @@ project/
 
 ---
 
-# 📈 Possíveis Melhorias Futuras
+# 📈 Melhorias Futuras
 
+- Sistema de times/equipes (em desenvolvimento)
 - Dashboard de produtividade
 - Relatórios por período
 - Gráficos de desempenho
-- Sistema de times/equipes
 - Controle de tempo automático
 - API REST
-- Deploy em produção
 - Integração com ferramentas de BI
 
 ---
