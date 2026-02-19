@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User # Importando o modelo de usuário padrão do Django.
 from datetime import timedelta 
+from django.utils import timezone
+
 class Task(models.Model): # models.Model indicia a classe base que sabe salvar algo no banco de dados. Sem isso é só python normal.
     STATUS_CHOICES = [
         ('todo', 'A Fazer'),
@@ -23,40 +25,46 @@ class Task(models.Model): # models.Model indicia a classe base que sabe salvar a
     created_at = models.DateTimeField(auto_now_add=True) # Criando coluna de data e hora que o django automaticamente salva quando a task é criada.
     worked_hours = models.FloatField(null=True, blank=True, default=0.0) # Criando coluna de horas trabalhadas que armazena a hora em float.
 
-    def worked_hours(self):
-        """
-        if self.start_time and self.end_time:
-            duration = self.end_time - self.start_time
-            return duration.total_seconds() / 3600 # retornando as horas trabalhadas em float.
-        return 0
-        """
+    def calculate_worked_hours(self):
         if not self.start_time or not self.end_time: # tratativa de erros, para caso nao tenha hora, ele nao calcule
             return 0
 
-        start = self.start_time # criando variavel local para trabalhar com a hora de inicio da task.
-        end = self.end_time # criando variavel local para trabalhar com a hora de fim da task.
+        start = timezone.localtime(self.start_time) # criando variavel local para trabalhar com a hora de inicio da task.
+        end = timezone.localtime(self.end_time) # criando variavel local para trabalhar com a hora de fim da task.
 
         total_seconds = 0 # variavel que acumulará o tempo útil em segundos
-
         current = start # variavel que vou iterar do inicio ao fim da task, verificando os dias úteis.
 
         while current < end: # loop que vai percorrer dia por dia
             next_day = (current + timedelta(days=1)).replace(  # pegando o proximo dia e zerando a hora para facilitar a comparacao
-                hour=0, 
-                minute=0, 
-                second=0, 
-                microsecond=0
+                hour=0, minute=0, second=0, microsecond=0
             )
             period_end = min(next_day, end) # definindo o fim do periodo como o proximo dia ou o fim da task, o que vier primeiro.
 
             if current.weekday() < 5:  # Verifica se é um dia útil (0-4 correspondem a segunda a sexta)
-                total_seconds += (period_end - current).total_seconds() # calculando as horas daquele dia e salvando numa variavel.
+                day = current.date() # pegando a data do dia atual da iteracao
+                work_start = current.replace(year=day.year, month=day.month, day=day.day, hour=9, minute=0, second=0, microsecond=0) # criando variavel para receber o inicio do periodo de trabalho
+                work_end = current.replace(year=day.year, month=day.month, day=day.day, hour=18, minute=0, second=0, microsecond=0) # criando variavel para receber o fim do periodo de trabalho
+                
+                lunch_start = current.replace(year=day.year, month=day.month, day=day.day, hour=12, minute=0, second=0, microsecond=0) # criando variavel para receber o inicio do almoço
+                lunch_end = current.replace(year=day.year, month=day.month, day=day.day, hour=13, minute=0, second=0, microsecond=0) # criando variavel para receber o fim do almoço
 
+                maxStart = max(current, work_start) # definindo o inicio do periodo de trabalho como o maior valor entre a hora atual e o inicio do periodo de trabalho
+                minEnd = min(period_end, work_end) # definindo o fim do periodo de trabalho como o menor valor entre o fim do periodo e o fim do periodo de trabalho
+
+                if maxStart < minEnd:
+                    worked_period = (minEnd - maxStart).total_seconds()
+                    verify_start = max(maxStart, lunch_start) # verificando se o inicio do periodo de trabalho é maior que o inicio do almoço, se for, ele define o inicio do periodo util como o inicio do almoço, caso contrario ele continua com o inicio do periodo de trabalho.
+                    verify_end = min(minEnd, lunch_end) # verificando se o fim do periodo de trabalho é menor que o fim do almoço, se for, ele define o fim do periodo util como o fim do almoço, caso contrario ele continua com o fim do periodo de trabalho.
+                    if verify_start < verify_end: # se o periodo de trabalho util tiver intersecao com o periodo de almoço, ele subtrai o periodo de almoço do periodo de trabalho util.
+                        worked_period -= (verify_end - verify_start).total_seconds()
+                    total_seconds += worked_period # acumulando o periodo util em segundos no total de segundos.
+            
             current = next_day # avançando para o próximo dia, repetindo o processo até chegar no fim da task.
         return total_seconds / 3600 # retornando as horas trabalhadas em float.
 
     def worked_hours_formated(self):
-        FloatHours = self.worked_hours() # obtendo as horas trabalhadas que foram calculadas em float.
+        FloatHours = self.calculate_worked_hours() # obtendo as horas trabalhadas que foram calculadas em float.
 
         hours = int(FloatHours) # convertendo as horas em inteiro.
         minutes = int((FloatHours - hours) * 60) # convertendo os minutos em inteiro.
