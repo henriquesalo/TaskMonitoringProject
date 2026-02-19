@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User # Importando o modelo de usuário padrão do Django.
-
+from datetime import timedelta 
 class Task(models.Model): # models.Model indicia a classe base que sabe salvar algo no banco de dados. Sem isso é só python normal.
     STATUS_CHOICES = [
         ('todo', 'A Fazer'),
@@ -24,10 +24,36 @@ class Task(models.Model): # models.Model indicia a classe base que sabe salvar a
     worked_hours = models.FloatField(null=True, blank=True, default=0.0) # Criando coluna de horas trabalhadas que armazena a hora em float.
 
     def worked_hours(self):
+        """
         if self.start_time and self.end_time:
             duration = self.end_time - self.start_time
             return duration.total_seconds() / 3600 # retornando as horas trabalhadas em float.
         return 0
+        """
+        if not self.start_time or not self.end_time: # tratativa de erros, para caso nao tenha hora, ele nao calcule
+            return 0
+
+        start = self.start_time # criando variavel local para trabalhar com a hora de inicio da task.
+        end = self.end_time # criando variavel local para trabalhar com a hora de fim da task.
+
+        total_seconds = 0 # variavel que acumulará o tempo útil em segundos
+
+        current = start # variavel que vou iterar do inicio ao fim da task, verificando os dias úteis.
+
+        while current < end: # loop que vai percorrer dia por dia
+            next_day = (current + timedelta(days=1)).replace(  # pegando o proximo dia e zerando a hora para facilitar a comparacao
+                hour=0, 
+                minute=0, 
+                second=0, 
+                microsecond=0
+            )
+            period_end = min(next_day, end) # definindo o fim do periodo como o proximo dia ou o fim da task, o que vier primeiro.
+
+            if current.weekday() < 5:  # Verifica se é um dia útil (0-4 correspondem a segunda a sexta)
+                total_seconds += (period_end - current).total_seconds() # calculando as horas daquele dia e salvando numa variavel.
+
+            current = next_day # avançando para o próximo dia, repetindo o processo até chegar no fim da task.
+        return total_seconds / 3600 # retornando as horas trabalhadas em float.
 
     def worked_hours_formated(self):
         FloatHours = self.worked_hours() # obtendo as horas trabalhadas que foram calculadas em float.

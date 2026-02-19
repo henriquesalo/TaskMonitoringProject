@@ -7,9 +7,9 @@ from tasks.models import Task # importando o modelo de task para poder filtrar a
 from tasks.forms import TaskForm, RegistrationForm # importando o form da task e o de registro.
 from django.utils import timezone # importando timezone para poder usar no createTask e respeita o timezone do projeto.
 from django.http import JsonResponse, HttpResponse # importando JsonResponse para poder retornar um json no updateTaskStatus e HttpResponse para poder enviar arquivos ao navegador.
-from datetime import datetime
+from datetime import datetime 
 from openpyxl import Workbook # importando o Workbook que representa um arquivo excel.
-import json
+import json 
 
 def userLogin(request):
     if request.method == 'POST':
