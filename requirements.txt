@@ -1,5 +1,2 @@
 Django
 openpyxl
-gunicorn
-whitenoise
-python-decouple

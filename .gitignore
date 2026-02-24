@@ -3,4 +3,3 @@ migrations/
 .DS_Store
 staticfiles/
 venv/
-.env
