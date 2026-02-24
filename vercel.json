@@ -1,0 +1,29 @@
+{
+    "version": 2,
+    "builds": [
+        {
+            "src": "tasksMonitoring/wsgi.py",
+            "use": "@vercel/python",
+            "config": {
+                "maxLambdaSize": "15mb",
+                "runtime": "python3.11"
+            }
+        }
+    ],
+    "routes": [
+        {
+            "src": "/static/(.*)",
+            "dest": "/static/$1",
+            "headers": {
+                "Cache-Control": "public, max-age=3600, immutable"
+            }
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/tasksMonitoring/wsgi.py"
+        }
+    ],
+    "env": {
+        "PYTHON_VERSION": "3.11"
+    }
+}
