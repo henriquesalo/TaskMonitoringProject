@@ -90,6 +90,30 @@
                 {% endfor %}
             </div>
         </section>
+        <section class="col">
+            <h2>Bloqueado/Pausado</h2>
+            <div class="list" data-status="blocked">
+                {% for task in blocked %}
+                    <article class="card clickable"
+                        onclick="openUpdateTask(this)"
+                        data-id="{{ task.id }}"
+                        data-title="{{ task.title|escape }}"
+                        data-description="{{ task.description|escape }}"
+                        data-status="{{ task.status }}"
+                        data-start-time="{{ task.start_time|date:'Y-m-d\\TH:i' }}"
+                        data-end-time="{{ task.end_time|date:'Y-m-d\\TH:i' }}"
+                        data-update-url="/kanban/updateTask/{{ task.id }}/"
+                        draggable="true">
+                        <div class="title">{{ task.title }}</div>
+                        <div class="desc">{{ task.description }}</div>
+                        <div class="meta">Bloqueada em {{ task.blocked_at|date:"d/m/Y H:i" }}</div>
+                        <div class="meta">Tempo Bloqueado: {{ task.blocked_hours_formated }}</div>
+                    </article>
+                {% empty %}
+                    <article class="card"><div class="desc">Sem itens</div></article>
+                {% endfor %}
+            </div>
+        </section>
     </main>
     <div id="createTaskModal" class="modal" aria-hidden="true">
         <div class="modal-backdrop" onclick="closeCreateTask()"></div>
@@ -114,6 +138,7 @@
                         <option value="todo">A Fazer</option>
                         <option value="doing">Fazendo</option>
                         <option value="done">Finalizado</option>
+                        <option value="blocked">Bloqueado/Pausado</option>
                     </select>
                 </div>
                 <div class="actions">
@@ -154,6 +179,7 @@
                         <option value="todo">A Fazer</option>
                         <option value="doing">Fazendo</option>
                         <option value="done">Finalizado</option>
+                        <option value="blocked">Bloqueado/Pausado</option>
                     </select>
                 </div>
                 <div class="actions">

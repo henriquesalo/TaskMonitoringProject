@@ -47,6 +47,7 @@ def kanban(request): # criando funcao kanban que envia uma requisicao com o usua
         'todo': tasks.filter(status='todo'),
         'doing': tasks.filter(status='doing'),
         'done': tasks.filter(status='done'),
+        'blocked': tasks.filter(status='blocked'),
     }
     return render(request, 'task/kanban.html', context) # carrega o template, injeta os dados, gera html e envia a resposta http.
 
@@ -86,7 +87,7 @@ def start_task(request, task_id): # a funcao recebe o usuario(request) e a task 
     return redirect('kanban') # redireciona para a pagina do kanban.
 
 def finish_task(request, task_id):
-    task = Task.objects.get(id=task_id, user=request.user)
+    task = Task.objects.get(id=task_id, user=request.user) # pegando a task pelo id e armazenando na variavel task e restringindo para somente ao user que a criou.
     task.end_time = timezone.now() # definindo o end time como a hora atual.
     task.status = 'done' # definindo o status como done e movendo automaticamente para sua coluna.
     task.save()
@@ -98,11 +99,27 @@ def updateTaskStatus(request, task_id):
         data = json.loads(request.body) # convertendo o corpo da req para python dict.
         newStatus = data.get('status') # pegando o status enviado.
         task = Task.objects.get(id=task_id, user=request.user) # pegando a task pelo id e restringindo para somente ao user que a criou.
+        oldStatus = task.status # guardando o status anterior da task.
         task.status = newStatus # atualizando o status da task.
         if newStatus == 'doing' and not task.start_time:
             task.start_time = timezone.now()
         if newStatus == 'done' and not task.end_time:
             task.end_time = timezone.now()
+        # Lógica para quando a task vai para bloqueada
+        if newStatus == 'blocked':
+            if not task.blocked_at:  # se nao tinha sido bloqueada antes, marca o inicio do bloqueio
+                task.blocked_at = timezone.now()
+            if task.start_time and not task.end_time:  # se a task tiver sido iniciada mas nao tiver sido finalizada
+                task.end_time = timezone.now()  # congela o tempo de fim temporariamente
+        # Lógica para quando a task sai de bloqueada
+        if oldStatus == 'blocked' and newStatus != 'blocked':
+            if task.blocked_at:  # se tiver data de quando foi bloqueada
+                blocked_hours = task.calculate_blocked_duration()  # calcula quanto tempo ficou bloqueada
+                task.total_blocked_hours = (task.total_blocked_hours or 0) + blocked_hours  # acumula no total de bloqueio
+                task.blocked_at = None  # limpa a data de inicio do bloqueio
+            if newStatus == 'doing': # Se voltou para "doing", reseta o end_time para continuar contando
+                task.end_time = None
+        
         task.save() # salvando a task com o novo status no banco.
         return JsonResponse({'success': True}) # retornando um json com sucesso.
 

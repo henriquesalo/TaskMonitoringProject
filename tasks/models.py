@@ -8,6 +8,7 @@ class Task(models.Model): # models.Model indicia a classe base que sabe salvar a
         ('todo', 'A Fazer'),
         ('doing', 'Fazendo'),
         ('done', 'Finalizado'),
+        ('blocked', 'Bloqueado'),
     ]
 
     title = models.CharField(max_length=200) # Criando coluna de titulo com maximo de 200 caracteres.and
@@ -22,8 +23,10 @@ class Task(models.Model): # models.Model indicia a classe base que sabe salvar a
     email = models.EmailField(max_length=200, null=True) # Criando coluna de email com maximo de 200 caracteres.
     start_time = models.DateTimeField(null=True, blank=True) # Criando coluna de data e hora de inicio onde o banco e o formulario aceitam nulo/vazio.
     end_time = models.DateTimeField(null=True, blank=True) # mesmo conceito de start_time.
+    blocked_at = models.DateTimeField(null=True, blank=True) # Criando coluna para rastrear quando a task foi bloqueada.
     created_at = models.DateTimeField(auto_now_add=True) # Criando coluna de data e hora que o django automaticamente salva quando a task é criada.
     worked_hours = models.FloatField(null=True, blank=True, default=0.0) # Criando coluna de horas trabalhadas que armazena a hora em float.
+    total_blocked_hours = models.FloatField(null=True, blank=True, default=0.0) # Criando coluna de horas bloqueadas que armazena a hora total em float.
 
     def calculate_worked_hours(self):
         if not self.start_time or not self.end_time: # tratativa de erros, para caso nao tenha hora, ele nao calcule
@@ -61,10 +64,26 @@ class Task(models.Model): # models.Model indicia a classe base que sabe salvar a
                     total_seconds += worked_period # acumulando o periodo util em segundos no total de segundos.
             
             current = next_day # avançando para o próximo dia, repetindo o processo até chegar no fim da task.
-        return total_seconds / 3600 # retornando as horas trabalhadas em float.
+        
+        total_seconds -= (self.total_blocked_hours * 3600) if self.total_blocked_hours else 0 # subtraindo as horas bloqueadas do total de segundos. Se total_blocked_hours for None, ele subtrai 0.
+        return max(total_seconds / 3600, 0) # retornando as horas trabalhadas em float (nunca menor que 0).
 
     def worked_hours_formated(self):
         FloatHours = self.calculate_worked_hours() # obtendo as horas trabalhadas que foram calculadas em float.
+
+        hours = int(FloatHours) # convertendo as horas em inteiro.
+        minutes = int((FloatHours - hours) * 60) # convertendo os minutos em inteiro.
+        return f"{hours:02d}:{minutes:02d}" # retornando as horas em HH:MM formatados.
+
+    def calculate_blocked_duration(self):
+        if not self.blocked_at: # se nao houver data de bloqueio, retorna 0.
+            return 0
+        now = timezone.now() # pegando a hora atual para calcular o tempo bloqueado até agora.
+        duration_seconds = (now - self.blocked_at).total_seconds() # calculando a duracao do bloqueio em segundos.
+        return duration_seconds / 3600  # retornar em horas
+
+    def blocked_hours_formated(self):
+        FloatHours = self.calculate_blocked_duration() # obtendo as horas bloqueadas que foram calculadas em float.
 
         hours = int(FloatHours) # convertendo as horas em inteiro.
         minutes = int((FloatHours - hours) * 60) # convertendo os minutos em inteiro.
