@@ -5,3 +5,5 @@ staticfiles/
 venv/
 dados.json
 .github/
+.github/workflows/
+fly.toml
