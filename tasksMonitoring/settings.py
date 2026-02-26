@@ -1,4 +1,6 @@
 from pathlib import Path
+import dj_database_url # importando a biblioteca dj_database_url para configurar o banco de dados a partir da variável de ambiente
+import os # importando a biblioteca os para acessar as variáveis de ambiente
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -9,7 +11,7 @@ SECRET_KEY = 'django-insecure-w(vt(e%)dv(&2ty$@yfkt=v30^hn+)0x6(gt2nmd(@tape_a9@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
 
@@ -63,6 +65,8 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+if os.environ.get('DATABASE_URL'):
+    DATABASES['default'] = dj_database_url.config(conn_max_age=600)
 
 
 # Password validation
@@ -105,3 +109,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/'
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://taskmonitoringproject.fly.dev',
+]
