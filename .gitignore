@@ -4,3 +4,4 @@ migrations/
 staticfiles/
 venv/
 dados.json
+.github/
