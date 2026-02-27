@@ -3,5 +3,4 @@ migrations/
 .DS_Store
 staticfiles/
 venv/
-dados.json
 db.sqlite3
