@@ -113,5 +113,5 @@ LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/'
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://<seu-app>.onrender.com',
+    'https://taskmonitoring-nwgy.onrender.com',
 ]
