@@ -4,25 +4,67 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Task Monitoring - registro</title>
-    <link rel="stylesheet" href="{% static 'css/registro.css' %}">
+    <title>Task Monitor — Registro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/registro.css' %}?v=2">
 </head>
 <body>
+    <div class="bg-grid"></div>
+
     <main class="card">
-        <h1 style="text-align: center;">Task Monitoring</h1>
-        <h1>Criar conta</h1>
-        {% if messages %}
-            <div class="msgs">
-                {% for message in messages %}{{ message }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+        <div class="brand">
+            <div class="brand-logo">
+                <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+                    <rect x="1" y="1" width="7" height="10" rx="2" fill="currentColor" opacity="0.9"/>
+                    <rect x="1" y="13" width="7" height="6" rx="2" fill="currentColor" opacity="0.4"/>
+                    <rect x="10" y="1" width="9" height="6" rx="2" fill="currentColor" opacity="0.4"/>
+                    <rect x="10" y="9" width="9" height="10" rx="2" fill="currentColor" opacity="0.9"/>
+                </svg>
             </div>
+            <span class="brand-name">Task Monitor</span>
+        </div>
+
+        <div class="card-header">
+            <h1>Criar conta</h1>
+            <p class="subtitle">Preencha os campos abaixo para se registrar</p>
+        </div>
+
+        {% if messages %}
+        <div class="alert alert-error" role="alert">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3.5M8 11h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <div>{% for message in messages %}{{ message }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>
+        </div>
         {% endif %}
-        <form method="post" style="display:flex;justify-items:center;flex-direction:column;">
+
+        <form method="post" class="django-form">
             {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Registrar</button>
+            {# Render each field manually for consistent styling #}
+            {% for field in form %}
+            <div class="field {% if field.errors %}field-error{% endif %}">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                <span class="help-text">{{ field.help_text }}</span>
+                {% endif %}
+                {% for error in field.errors %}
+                <span class="error-msg">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.2"/><path d="M6 4v2.5M6 8.2h.01" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    {{ error }}
+                </span>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn-submit">
+                Criar conta
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
         </form>
-        <div class="link">
-            <a href="{% url 'login' %}">Já tenho conta</a>
+
+        <div class="card-footer">
+            <span>Já tem conta?</span>
+            <a href="{% url 'login' %}">Entrar</a>
         </div>
     </main>
 </body>

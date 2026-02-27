@@ -4,35 +4,60 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Task Monitoring - login </title>
-    <link rel="stylesheet" href="{% static 'css/login.css' %}?v=1">
+    <title>Task Monitor — Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}?v=2">
 </head>
 <body>
+    <div class="bg-grid"></div>
+
     <main class="card">
-        <h1 style="text-align: center;">Task Monitoring</h1>
+        <div class="brand">
+            <div class="brand-logo">
+                <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+                    <rect x="1" y="1" width="7" height="10" rx="2" fill="currentColor" opacity="0.9"/>
+                    <rect x="1" y="13" width="7" height="6" rx="2" fill="currentColor" opacity="0.4"/>
+                    <rect x="10" y="1" width="9" height="6" rx="2" fill="currentColor" opacity="0.4"/>
+                    <rect x="10" y="9" width="9" height="10" rx="2" fill="currentColor" opacity="0.9"/>
+                </svg>
+            </div>
+            <span class="brand-name">Task Monitor</span>
+        </div>
+
+        <div class="card-header">
+            <h1>Bem-vindo de volta</h1>
+            <p class="subtitle">Entre com suas credenciais para continuar</p>
+        </div>
+
+        {% if messages %}
+        <div class="alert alert-error" role="alert">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3.5M8 11h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <div>
+                {% for message in messages %}{{ message }}{% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
         <form method="post" action="{% url 'login' %}">
             {% csrf_token %}
-            {% if messages %}
-            <ul class="messages">
-                {% for message in messages %}
-                <li class="{{ message.tags }}" id="msg">{{ message }}</li>
-                {% endfor %}
-            </ul>
-            {% endif %}
             <div class="field">
                 <label for="username">Usuário</label>
-                <input id="username" name="username" type="text" required autofocus>
+                <input id="username" name="username" type="text" placeholder="Seu nome de usuário" required autofocus autocomplete="username">
             </div>
             <div class="field">
                 <label for="password">Senha</label>
-                <input id="password" name="password" type="password" required>
+                <input id="password" name="password" type="password" placeholder="••••••••" required autocomplete="current-password">
             </div>
-            <div class="actions">
-                <button type="submit">Entrar</button>
-            </div>
+            <button type="submit" class="btn-submit">
+                Entrar
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
         </form>
-        <br>
-        <div class="link">
+
+        <div class="card-footer">
+            <span>Não tem conta?</span>
             <a href="{% url 'registro' %}">Criar uma conta</a>
         </div>
     </main>

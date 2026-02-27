@@ -110,6 +110,8 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/'
 
+"""
 CSRF_TRUSTED_ORIGINS = [
-    'https://taskmonitoringproject.fly.dev',
+    '',
 ]
+"""

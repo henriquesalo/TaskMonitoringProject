@@ -5,192 +5,315 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Task Monitoring</title>
-    <link rel="stylesheet" href="{% static 'css/kanban.css' %}?v=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/kanban.css' %}?v=4">
 </head>
 <body>
+
     <header class="bar">
-        <h1>Task Monitoring</h1>
+        <div class="bar-brand">
+            <div class="bar-logo">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <rect x="1" y="1" width="7" height="10" rx="2" fill="currentColor" opacity="0.9"/>
+                    <rect x="1" y="13" width="7" height="6" rx="2" fill="currentColor" opacity="0.4"/>
+                    <rect x="10" y="1" width="9" height="6" rx="2" fill="currentColor" opacity="0.4"/>
+                    <rect x="10" y="9" width="9" height="10" rx="2" fill="currentColor" opacity="0.9"/>
+                </svg>
+            </div>
+            <h1>Task Monitor</h1>
+        </div>
         <div class="top-actions">
-            <span class="user">Olá, {{ request.user.username }} </span>
-            <a class="btn" href="javascript:void(0)" onclick="openCreateTask()">Nova Task</a>
-            <a class="btn" href="{% url 'exportTasksExcel' %}" style="background-color: rgb(7, 159, 7);">Exportar Excel</a>
-            <a class="btn" href="{% url 'logout' %}">Sair</a>
+            <span class="user-badge">
+                <span class="user-avatar">{{ request.user.username|first|upper }}</span>
+                <span class="user-name">{{ request.user.username }}</span>
+            </span>
+            <button class="btn btn-primary" onclick="openCreateTask()">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                Nova Task
+            </button>
+            <a class="btn btn-success" href="{% url 'exportTasksExcel' %}">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10v2a1 1 0 001 1h8a1 1 0 001-1v-2M7 1v8M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Exportar
+            </a>
+            <a class="btn btn-ghost" href="{% url 'logout' %}">Sair</a>
         </div>
     </header>
-    <main class="wrap">
-        <section class="col">
-            <h2>A Fazer</h2>
+
+    <main class="board">
+
+        <!-- A Fazer -->
+        <div class="col" data-col="todo">
+            <div class="col-head">
+                <div class="col-label">
+                    <span class="col-dot dot-todo"></span>A Fazer
+                </div>
+                <span class="col-count">{{ todo|length }}</span>
+            </div>
             <div class="list" data-status="todo">
                 {% for task in todo %}
-                    <article class="card clickable"
-                        onclick="openUpdateTask(this)"
-                        data-id="{{ task.id }}"
-                        data-title="{{ task.title|escape }}"
-                        data-description="{{ task.description|escape }}"
-                        data-status="{{ task.status }}"
-                        data-start-time="{{ task.start_time|date:'Y-m-d\TH:i' }}"
-                        data-end-time="{{ task.end_time|date:'Y-m-d\TH:i' }}"
-                        data-update-url="/kanban/updateTask/{{ task.id }}/"
-                        draggable="true">
-                        <div class="title">{{ task.title }}</div>
-                        <div class="desc">{{ task.description }}</div>
-                        <div class="meta">Criada em {{ task.created_at|date:"d/m/Y H:i" }}</div>
-                        <div class="meta">Horas Trabalhadas: {{ task.worked_hours_formated }}</div>
-                    </article>
+                <article class="card"
+                    data-id="{{ task.id }}"
+                    data-title="{{ task.title|escape }}"
+                    data-description="{{ task.description|escape }}"
+                    data-status="{{ task.status }}"
+                    data-start-time="{{ task.start_time|date:'Y-m-d\TH:i' }}"
+                    data-end-time="{{ task.end_time|date:'Y-m-d\TH:i' }}"
+                    data-update-url="/kanban/updateTask/{{ task.id }}/"
+                    draggable="true">
+                    <div class="card-top">
+                        <div class="card-title">{{ task.title }}</div>
+                        <div class="card-drag-handle" data-drag="true">⠿</div>
+                    </div>
+                    {% if task.description %}<div class="card-desc">{{ task.description }}</div>{% endif %}
+                    <div class="card-info-row">
+                        <span class="card-info-item">
+                            <span class="card-info-label">Criada</span>
+                            <span class="card-info-value">{{ task.created_at|date:"d/m/Y H:i" }}</span>
+                        </span>
+                        <span class="card-badge badge-neutral">⏱ {{ task.worked_hours_formated }}</span>
+                    </div>
+                </article>
                 {% empty %}
-                    <article class="card"><div class="desc">Sem itens</div></article>
+                <div class="col-empty"><p>Nenhuma tarefa</p></div>
                 {% endfor %}
             </div>
-        </section>
-        <section class="col">
-            <h2>Fazendo</h2>
+        </div>
+
+        <!-- Em Andamento -->
+        <div class="col" data-col="doing">
+            <div class="col-head">
+                <div class="col-label">
+                    <span class="col-dot dot-doing"></span>Em Andamento
+                </div>
+                <span class="col-count">{{ doing|length }}</span>
+            </div>
             <div class="list" data-status="doing">
                 {% for task in doing %}
-                    <article class="card clickable"
-                        onclick="openUpdateTask(this)"
-                        data-id="{{ task.id }}"
-                        data-title="{{ task.title|escape }}"
-                        data-description="{{ task.description|escape }}"
-                        data-status="{{ task.status }}"
-                        data-start-time="{{ task.start_time|date:'Y-m-d\\TH:i' }}"
-                        data-end-time="{{ task.end_time|date:'Y-m-d\\TH:i' }}"
-                        data-update-url="/kanban/updateTask/{{ task.id }}/"
-                        draggable="true">
-                        <div class="title">{{ task.title }}</div>
-                        <div class="desc">{{ task.description }}</div>
-                        <div class="meta">Início {{ task.start_time|date:"d/m/Y H:i" }}</div>
-                        <div class="meta">Horas Trabalhadas: {{ task.worked_hours_formated }}</div>
-                    </article>
+                <article class="card card-doing"
+                    data-id="{{ task.id }}"
+                    data-title="{{ task.title|escape }}"
+                    data-description="{{ task.description|escape }}"
+                    data-status="{{ task.status }}"
+                    data-start-time="{{ task.start_time|date:'Y-m-d\\TH:i' }}"
+                    data-end-time="{{ task.end_time|date:'Y-m-d\\TH:i' }}"
+                    data-update-url="/kanban/updateTask/{{ task.id }}/"
+                    draggable="true">
+                    <div class="card-top">
+                        <div class="card-title">{{ task.title }}</div>
+                        <div class="card-drag-handle" data-drag="true">⠿</div>
+                    </div>
+                    {% if task.description %}<div class="card-desc">{{ task.description }}</div>{% endif %}
+                    <div class="card-info-row">
+                        <span class="card-info-item">
+                            <span class="card-info-label">Início</span>
+                            <span class="card-info-value">{{ task.start_time|date:"d/m/Y H:i" }}</span>
+                        </span>
+                        <span class="card-badge badge-blue">⏱ {{ task.worked_hours_formated }}</span>
+                    </div>
+                </article>
                 {% empty %}
-                    <article class="card"><div class="desc">Sem itens</div></article>
+                <div class="col-empty"><p>Nenhuma tarefa</p></div>
                 {% endfor %}
             </div>
-        </section>
-        <section class="col">
-            <h2>Finalizado</h2>
+        </div>
+
+        <!-- Concluído -->
+        <div class="col" data-col="done">
+            <div class="col-head">
+                <div class="col-label">
+                    <span class="col-dot dot-done"></span>Concluído
+                </div>
+                <span class="col-count">{{ done|length }}</span>
+            </div>
             <div class="list" data-status="done">
                 {% for task in done %}
-                    <article class="card clickable"
-                        onclick="openUpdateTask(this)"
-                        data-id="{{ task.id }}"
-                        data-title="{{ task.title|escape }}"
-                        data-description="{{ task.description|escape }}"
-                        data-status="{{ task.status }}"
-                        data-start-time="{{ task.start_time|date:'Y-m-d\\TH:i' }}"
-                        data-end-time="{{ task.end_time|date:'Y-m-d\\TH:i' }}"
-                        data-update-url="/kanban/updateTask/{{ task.id }}/"
-                        draggable="true">
-                        <div class="title">{{ task.title }}</div>
-                        <div class="desc">{{ task.description }}</div>
-                        <div class="meta">Fim {{ task.end_time|date:"d/m/Y H:i" }}</div>
-                        <div class="meta">Horas Trabalhadas: {{ task.worked_hours_formated }}</div>
-                    </article>
+                <article class="card card-done"
+                    data-id="{{ task.id }}"
+                    data-title="{{ task.title|escape }}"
+                    data-description="{{ task.description|escape }}"
+                    data-status="{{ task.status }}"
+                    data-start-time="{{ task.start_time|date:'Y-m-d\\TH:i' }}"
+                    data-end-time="{{ task.end_time|date:'Y-m-d\\TH:i' }}"
+                    data-update-url="/kanban/updateTask/{{ task.id }}/"
+                    draggable="true">
+                    <div class="card-top">
+                        <div class="card-title">{{ task.title }}</div>
+                        <div class="card-drag-handle" data-drag="true">⠿</div>
+                    </div>
+                    {% if task.description %}<div class="card-desc">{{ task.description }}</div>{% endif %}
+                    <div class="card-info-row card-info-row--done">
+                        <div class="card-info-dates">
+                            <span class="card-info-item">
+                                <span class="card-info-label">Início</span>
+                                <span class="card-info-value">{{ task.start_time|date:"d/m/Y H:i" }}</span>
+                            </span>
+                            <span class="card-info-item">
+                                <span class="card-info-label">Fim</span>
+                                <span class="card-info-value">{{ task.end_time|date:"d/m/Y H:i" }}</span>
+                            </span>
+                        </div>
+                        <span class="card-badge badge-green">✓ {{ task.worked_hours_formated }}</span>
+                    </div>
+                </article>
                 {% empty %}
-                    <article class="card"><div class="desc">Sem itens</div></article>
+                <div class="col-empty"><p>Nenhuma tarefa</p></div>
                 {% endfor %}
             </div>
-        </section>
-        <section class="col">
-            <h2>Bloqueado/Pausado</h2>
+        </div>
+
+        <!-- Bloqueado -->
+        <div class="col" data-col="blocked">
+            <div class="col-head">
+                <div class="col-label">
+                    <span class="col-dot dot-blocked"></span>Bloqueado
+                </div>
+                <span class="col-count">{{ blocked|length }}</span>
+            </div>
             <div class="list" data-status="blocked">
                 {% for task in blocked %}
-                    <article class="card clickable"
-                        onclick="openUpdateTask(this)"
-                        data-id="{{ task.id }}"
-                        data-title="{{ task.title|escape }}"
-                        data-description="{{ task.description|escape }}"
-                        data-status="{{ task.status }}"
-                        data-start-time="{{ task.start_time|date:'Y-m-d\\TH:i' }}"
-                        data-end-time="{{ task.end_time|date:'Y-m-d\\TH:i' }}"
-                        data-update-url="/kanban/updateTask/{{ task.id }}/"
-                        draggable="true">
-                        <div class="title">{{ task.title }}</div>
-                        <div class="desc">{{ task.description }}</div>
-                        <div class="meta">Bloqueada em {{ task.blocked_at|date:"d/m/Y H:i" }}</div>
-                        <div class="meta">Tempo Bloqueado: {{ task.blocked_hours_formated }}</div>
-                    </article>
+                <article class="card card-blocked"
+                    data-id="{{ task.id }}"
+                    data-title="{{ task.title|escape }}"
+                    data-description="{{ task.description|escape }}"
+                    data-status="{{ task.status }}"
+                    data-start-time="{{ task.start_time|date:'Y-m-d\\TH:i' }}"
+                    data-end-time="{{ task.end_time|date:'Y-m-d\\TH:i' }}"
+                    data-update-url="/kanban/updateTask/{{ task.id }}/"
+                    draggable="true">
+                    <div class="card-top">
+                        <div class="card-title">{{ task.title }}</div>
+                        <div class="card-drag-handle" data-drag="true">⠿</div>
+                    </div>
+                    {% if task.description %}<div class="card-desc">{{ task.description }}</div>{% endif %}
+                    <div class="card-info-row">
+                        <span class="card-info-item">
+                            <span class="card-info-label">Bloqueada em</span>
+                            <span class="card-info-value">{{ task.blocked_at|date:"d/m/Y H:i" }}</span>
+                        </span>
+                        <span class="card-badge badge-red">⛔ {{ task.blocked_hours_formated }}</span>
+                    </div>
+                </article>
                 {% empty %}
-                    <article class="card"><div class="desc">Sem itens</div></article>
+                <div class="col-empty"><p>Nenhuma tarefa</p></div>
                 {% endfor %}
             </div>
-        </section>
+        </div>
+
     </main>
-    <div id="createTaskModal" class="modal" aria-hidden="true">
+
+    <div id="toast" class="toast" aria-live="polite"></div>
+
+    <!-- Modal: Nova Task -->
+    <div id="createTaskModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="createModalTitle">
         <div class="modal-backdrop" onclick="closeCreateTask()"></div>
-        <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-            <header class="modal-bar">
-                <h2 id="modalTitle">Nova Task</h2>
-                <button class="close" type="button" onclick="closeCreateTask()" aria-label="Fechar">✕</button>
-            </header>
-            <form class="modal-form" method="post" action="{% url 'createTask' %}">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="createModalTitle">Nova Task</h2>
+                <button class="modal-close" onclick="closeCreateTask()" aria-label="Fechar">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <form class="modal-body" method="post" action="{% url 'createTask' %}">
                 {% csrf_token %}
                 <div class="field">
-                    <label for="title">Título</label>
-                    <input id="title" name="title" type="text" required>
+                    <label for="c-title">Título</label>
+                    <input id="c-title" name="title" type="text" placeholder="Nome da tarefa..." required autocomplete="off">
                 </div>
                 <div class="field">
-                    <label for="description">Descrição</label>
-                    <textarea id="description" name="description"></textarea>
+                    <label for="c-description">Descrição <span class="optional">opcional</span></label>
+                    <textarea id="c-description" name="description" placeholder="Descreva a tarefa..."></textarea>
                 </div>
                 <div class="field">
-                    <label for="status">Status</label>
-                    <select id="status" name="status" required>
+                    <label for="c-status">Status inicial</label>
+                    <select id="c-status" name="status" required>
                         <option value="todo">A Fazer</option>
-                        <option value="doing">Fazendo</option>
-                        <option value="done">Finalizado</option>
-                        <option value="blocked">Bloqueado/Pausado</option>
+                        <option value="doing">Em Andamento</option>
+                        <option value="done">Concluído</option>
+                        <option value="blocked">Bloqueado</option>
                     </select>
                 </div>
-                <div class="actions">
-                    <button type="submit">Salvar</button>
-                    <a class="btn secondary" href="javascript:void(0)" onclick="closeCreateTask()">Cancelar</a>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Criar tarefa</button>
+                    <button type="button" class="btn btn-ghost" onclick="closeCreateTask()">Cancelar</button>
                 </div>
             </form>
-        </section>
+        </div>
     </div>
-    <div id="updateTaskModal" class="modal" aria-hidden="true">
+
+    <!-- Modal: Editar Task -->
+    <div id="updateTaskModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="updateModalTitle">
         <div class="modal-backdrop" onclick="closeUpdateTask()"></div>
-        <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="updateModalTitle">
-            <header class="modal-bar">
+        <div class="modal-card">
+            <div class="modal-header">
                 <h2 id="updateModalTitle">Editar Task</h2>
-                <button class="close" type="button" onclick="closeUpdateTask()" aria-label="Fechar">✕</button>
-            </header>
-            <form id="updateTaskForm" class="modal-form" method="post" action="#">
+                <button class="modal-close" onclick="closeUpdateTask()" aria-label="Fechar">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <form id="updateTaskForm" class="modal-body" method="post" action="#">
                 {% csrf_token %}
                 <div class="field">
-                    <label for="utitle">Título</label>
-                    <input id="utitle" name="title" type="text" required>
+                    <label for="u-title">Título</label>
+                    <input id="u-title" name="title" type="text" required autocomplete="off">
                 </div>
                 <div class="field">
-                    <label for="udescription">Descrição</label>
-                    <textarea id="udescription" name="description"></textarea>
+                    <label for="u-description">Descrição <span class="optional">opcional</span></label>
+                    <textarea id="u-description" name="description"></textarea>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label for="u-start">Início</label>
+                        <input id="u-start" name="start_time" type="datetime-local">
+                    </div>
+                    <div class="field">
+                        <label for="u-end">Fim</label>
+                        <input id="u-end" name="end_time" type="datetime-local">
+                    </div>
                 </div>
                 <div class="field">
-                    <label for="ustart_time">Início</label>
-                    <input id="ustart_time" name="start_time" type="datetime-local">
-                </div>
-                <div class="field">
-                    <label for="uend_time">Fim</label>
-                    <input id="uend_time" name="end_time" type="datetime-local">
-                </div>
-                <div class="field">
-                    <label for="ustatus">Status</label>
-                    <select id="ustatus" name="status" required>
+                    <label for="u-status">Status</label>
+                    <select id="u-status" name="status" required>
                         <option value="todo">A Fazer</option>
-                        <option value="doing">Fazendo</option>
-                        <option value="done">Finalizado</option>
-                        <option value="blocked">Bloqueado/Pausado</option>
+                        <option value="doing">Em Andamento</option>
+                        <option value="done">Concluído</option>
+                        <option value="blocked">Bloqueado</option>
                     </select>
                 </div>
-                <div class="actions">
-                    <button type="submit">Salvar alterações</button>
-                    <a class="btn secondary" href="javascript:void(0)" onclick="closeUpdateTask()">Cancelar</a>
-                    <button id="deleteBtn" type="submit" class="btn danger">Excluir</button>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                    <button type="button" class="btn btn-ghost" onclick="closeUpdateTask()">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="deleteBtn" onclick="confirmDelete()">Excluir</button>
                 </div>
             </form>
-        </section>
+        </div>
     </div>
-    <script src="{% static 'js/script.js' %}"></script>
-    <script src="{% static 'js/draganddrop.js' %}?v=2"></script>
+
+    <!-- Modal: Confirmar exclusão -->
+    <div id="deleteConfirmModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="modal-backdrop" onclick="closeDeleteConfirm()"></div>
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <h2>Confirmar exclusão</h2>
+                <button class="modal-close" onclick="closeDeleteConfirm()" aria-label="Fechar">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="confirm-text">Tem certeza que deseja excluir esta tarefa? Esta ação não pode ser desfeita.</p>
+                <form id="deleteForm" method="post" action="#">
+                    {% csrf_token %}
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-danger">Sim, excluir</button>
+                        <button type="button" class="btn btn-ghost" onclick="closeDeleteConfirm()">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/script.js' %}?v=4.1"></script>
+    <script src="{% static 'js/draganddrop.js' %}?v=4.1"></script>
 </body>
 </html>
