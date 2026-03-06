@@ -7,9 +7,106 @@ from tasks.models import Task # importando o modelo de task para poder filtrar a
 from tasks.forms import TaskForm, RegistrationForm # importando o form da task e o de registro.
 from django.utils import timezone # importando timezone para poder usar no createTask e respeita o timezone do projeto.
 from django.http import JsonResponse, HttpResponse # importando JsonResponse para poder retornar um json no updateTaskStatus e HttpResponse para poder enviar arquivos ao navegador.
-from datetime import datetime 
+from datetime import datetime, timedelta
 from openpyxl import Workbook # importando o Workbook que representa um arquivo excel.
 import json 
+
+def build_dashboard_data(tasks):
+    tracked_tasks = list(tasks.exclude(start_time__isnull=True).exclude(end_time__isnull=True))
+    done_tasks = list(tasks.filter(status='done', end_time__isnull=False))
+
+    today = timezone.localdate()
+
+    daily_dates = [today - timedelta(days=i) for i in range(13, -1, -1)]
+    daily_hours = {d: 0 for d in daily_dates}
+    daily_done = {d: 0 for d in daily_dates}
+
+    for task in tracked_tasks:
+        end_date = timezone.localdate(task.end_time)
+        if end_date in daily_hours:
+            daily_hours[end_date] += task.calculate_worked_hours()
+
+    for task in done_tasks:
+        end_date = timezone.localdate(task.end_time)
+        if end_date in daily_done:
+            daily_done[end_date] += 1
+
+    daily_labels = [d.strftime("%d/%m") for d in daily_dates]
+    daily_hours_values = [round(daily_hours[d], 2) for d in daily_dates]
+    daily_done_values = [daily_done[d] for d in daily_dates]
+
+    week_starts = []
+    current_week_start = today - timedelta(days=today.weekday())
+    for i in range(7, -1, -1):
+        week_starts.append(current_week_start - timedelta(weeks=i))
+
+    weekly_hours = {d: 0 for d in week_starts}
+    weekly_done = {d: 0 for d in week_starts}
+
+    for task in tracked_tasks:
+        end_date = timezone.localdate(task.end_time)
+        week_start = end_date - timedelta(days=end_date.weekday())
+        if week_start in weekly_hours:
+            weekly_hours[week_start] += task.calculate_worked_hours()
+
+    for task in done_tasks:
+        end_date = timezone.localdate(task.end_time)
+        week_start = end_date - timedelta(days=end_date.weekday())
+        if week_start in weekly_done:
+            weekly_done[week_start] += 1
+
+    weekly_labels = [f"Sem {d.isocalendar().week:02d}/{d.isocalendar().year}" for d in week_starts]
+    weekly_hours_values = [round(weekly_hours[d], 2) for d in week_starts]
+    weekly_done_values = [weekly_done[d] for d in week_starts]
+
+    month_keys = []
+    base_month = today.replace(day=1)
+    for i in range(11, -1, -1):
+        year = base_month.year
+        month = base_month.month - i
+        while month <= 0:
+            month += 12
+            year -= 1
+        month_keys.append((year, month))
+
+    monthly_hours = {k: 0 for k in month_keys}
+    monthly_done = {k: 0 for k in month_keys}
+
+    for task in tracked_tasks:
+        end_date = timezone.localdate(task.end_time)
+        key = (end_date.year, end_date.month)
+        if key in monthly_hours:
+            monthly_hours[key] += task.calculate_worked_hours()
+
+    for task in done_tasks:
+        end_date = timezone.localdate(task.end_time)
+        key = (end_date.year, end_date.month)
+        if key in monthly_done:
+            monthly_done[key] += 1
+
+    monthly_labels = [f"{m:02d}/{y}" for (y, m) in month_keys]
+    monthly_hours_values = [round(monthly_hours[k], 2) for k in month_keys]
+    monthly_done_values = [monthly_done[k] for k in month_keys]
+
+    total_hours = round(sum(daily_hours_values), 2)
+    total_done = sum(daily_done_values)
+
+    return {
+        'hours': {
+            'daily': {'labels': daily_labels, 'values': daily_hours_values},
+            'weekly': {'labels': weekly_labels, 'values': weekly_hours_values},
+            'monthly': {'labels': monthly_labels, 'values': monthly_hours_values},
+        },
+        'done': {
+            'daily': {'labels': daily_labels, 'values': daily_done_values},
+            'weekly': {'labels': weekly_labels, 'values': weekly_done_values},
+            'monthly': {'labels': monthly_labels, 'values': monthly_done_values},
+        },
+        'totals': {
+            'hours': total_hours,
+            'done': total_done,
+        }
+    }
 
 def userLogin(request):
     if request.method == 'POST':
@@ -122,6 +219,42 @@ def updateTaskStatus(request, task_id):
         
         task.save() # salvando a task com o novo status no banco.
         return JsonResponse({'success': True}) # retornando um json com sucesso.
+
+@login_required
+def dashboard(request):
+    tasks = Task.objects.filter(user=request.user)
+    dashboard_data = build_dashboard_data(tasks)
+    return render(request, 'task/dashboard.html', {
+        'dashboard_data': dashboard_data
+    })
+
+@login_required
+def exportDashboardExcel(request):
+    tasks = Task.objects.filter(user=request.user)
+    dashboard_data = build_dashboard_data(tasks)
+
+    workbook = Workbook()
+    workbook.remove(workbook.active)
+
+    def add_sheet(title, labels, values):
+        ws = workbook.create_sheet(title=title)
+        ws.append(["Período", "Valor"])
+        for label, value in zip(labels, values):
+            ws.append([label, value])
+
+    add_sheet("Horas - Dia", dashboard_data['hours']['daily']['labels'], dashboard_data['hours']['daily']['values'])
+    add_sheet("Horas - Semana", dashboard_data['hours']['weekly']['labels'], dashboard_data['hours']['weekly']['values'])
+    add_sheet("Horas - Mês", dashboard_data['hours']['monthly']['labels'], dashboard_data['hours']['monthly']['values'])
+    add_sheet("Concluídas - Dia", dashboard_data['done']['daily']['labels'], dashboard_data['done']['daily']['values'])
+    add_sheet("Concluídas - Semana", dashboard_data['done']['weekly']['labels'], dashboard_data['done']['weekly']['values'])
+    add_sheet("Concluídas - Mês", dashboard_data['done']['monthly']['labels'], dashboard_data['done']['monthly']['values'])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response['Content-Disposition'] = 'attachment; filename="dashboard.xlsx"'
+    workbook.save(response)
+    return response
 
 @login_required
 def exportTasksExcel(request):

@@ -1,0 +1,230 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Task Monitor — Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/kanban.css' %}?v=4">
+</head>
+<body>
+    <header class="bar">
+        <div class="bar-brand">
+            <div class="bar-logo">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <rect x="1" y="1" width="7" height="10" rx="2" fill="currentColor" opacity="0.9"/>
+                    <rect x="1" y="13" width="7" height="6" rx="2" fill="currentColor" opacity="0.4"/>
+                    <rect x="10" y="1" width="9" height="6" rx="2" fill="currentColor" opacity="0.4"/>
+                    <rect x="10" y="9" width="9" height="10" rx="2" fill="currentColor" opacity="0.9"/>
+                </svg>
+            </div>
+            <h1>Task Monitor</h1>
+        </div>
+        <div class="top-actions">
+            <span class="user-badge">
+                <span class="user-avatar">{{ request.user.username|first|upper }}</span>
+                <span class="user-name">{{ request.user.username }}</span>
+            </span>
+            <a class="btn btn-ghost" href="{% url 'kanban' %}">Kanban</a>
+            <a class="btn btn-success" href="{% url 'exportDashboardExcel' %}">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10v2a1 1 0 001 1h8a1 1 0 001-1v-2M7 1v8M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Exportar
+            </a>
+            <a class="btn btn-ghost" href="{% url 'logout' %}">Sair</a>
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <div class="dash-top">
+            <div class="dash-title">
+                <h2>Dashboard</h2>
+                <p class="dash-subtitle">Resumo de horas trabalhadas e tarefas concluídas</p>
+            </div>
+            <div class="dash-summary">
+                <div class="stat-card">
+                    <span class="stat-label">Horas (14 dias)</span>
+                    <span class="stat-value">{{ dashboard_data.totals.hours }}</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Tasks concluídas (14 dias)</span>
+                    <span class="stat-value">{{ dashboard_data.totals.done }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="dash-grid">
+            <section class="panel">
+                <h3>Horas por dia</h3>
+                <div class="chart-box"><canvas id="hoursDaily"></canvas></div>
+            </section>
+            <section class="panel">
+                <h3>Horas por semana</h3>
+                <div class="chart-box"><canvas id="hoursWeekly"></canvas></div>
+            </section>
+            <section class="panel">
+                <h3>Horas por mês</h3>
+                <div class="chart-box"><canvas id="hoursMonthly"></canvas></div>
+            </section>
+            <section class="panel">
+                <h3>Tasks concluídas por dia</h3>
+                <div class="chart-box"><canvas id="doneDaily"></canvas></div>
+            </section>
+            <section class="panel">
+                <h3>Tasks concluídas por semana</h3>
+                <div class="chart-box"><canvas id="doneWeekly"></canvas></div>
+            </section>
+            <section class="panel">
+                <h3>Tasks concluídas por mês</h3>
+                <div class="chart-box"><canvas id="doneMonthly"></canvas></div>
+            </section>
+        </div>
+
+        <section class="panel table-panel">
+            <div class="table-head">
+                <div>
+                    <h3>Tabela de métricas</h3>
+                    <p class="dash-subtitle">Filtre por período e tipo de dado</p>
+                </div>
+            </div>
+            <div class="table-controls">
+                <div class="field">
+                    <label for="metricSelect">Indicador</label>
+                    <select id="metricSelect">
+                        <option value="hours">Horas trabalhadas</option>
+                        <option value="done">Tasks concluídas</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="periodSelect">Período</label>
+                    <select id="periodSelect">
+                        <option value="daily">Dia</option>
+                        <option value="weekly">Semana</option>
+                        <option value="monthly">Mês</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="tableSearch">Buscar</label>
+                    <input id="tableSearch" type="text" placeholder="Filtrar período">
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table class="data-table" id="metricsTable">
+                    <thead>
+                        <tr>
+                            <th>Período</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    {{ dashboard_data|json_script:"dashboard-data" }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        const dashboardData = JSON.parse(document.getElementById('dashboard-data').textContent);
+        const baseOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: { ticks: { color: '#8a9ab8' }, grid: { color: 'rgba(38,48,68,0.4)' } },
+                y: { ticks: { color: '#8a9ab8' }, grid: { color: 'rgba(38,48,68,0.4)' } }
+            }
+        };
+
+        function renderLine(id, labels, values, color) {
+            const ctx = document.getElementById(id);
+            if (!ctx) return;
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        data: values,
+                        borderColor: color,
+                        backgroundColor: color.replace('1)', '0.2)'),
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: baseOptions
+            });
+        }
+
+        function renderBar(id, labels, values, color) {
+            const ctx = document.getElementById(id);
+            if (!ctx) return;
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: color.replace('1)', '0.35)'),
+                        borderColor: color,
+                        borderWidth: 1
+                    }]
+                },
+                options: baseOptions
+            });
+        }
+
+        renderLine('hoursDaily', dashboardData.hours.daily.labels, dashboardData.hours.daily.values, 'rgba(59,130,246,1)');
+        renderLine('hoursWeekly', dashboardData.hours.weekly.labels, dashboardData.hours.weekly.values, 'rgba(59,130,246,1)');
+        renderLine('hoursMonthly', dashboardData.hours.monthly.labels, dashboardData.hours.monthly.values, 'rgba(59,130,246,1)');
+
+        renderBar('doneDaily', dashboardData.done.daily.labels, dashboardData.done.daily.values, 'rgba(34,197,94,1)');
+        renderBar('doneWeekly', dashboardData.done.weekly.labels, dashboardData.done.weekly.values, 'rgba(34,197,94,1)');
+        renderBar('doneMonthly', dashboardData.done.monthly.labels, dashboardData.done.monthly.values, 'rgba(34,197,94,1)');
+
+        const metricSelect = document.getElementById('metricSelect');
+        const periodSelect = document.getElementById('periodSelect');
+        const tableSearch = document.getElementById('tableSearch');
+        const tableBody = document.querySelector('#metricsTable tbody');
+
+        function formatValue(metric, value) {
+            if (metric === 'hours') {
+                return value.toFixed(2).replace('.', ',');
+            }
+            return value;
+        }
+
+        function renderTable() {
+            const metric = metricSelect.value;
+            const period = periodSelect.value;
+            const data = dashboardData[metric][period];
+            const filter = tableSearch.value.trim().toLowerCase();
+
+            tableBody.innerHTML = '';
+            let hasRows = false;
+
+            data.labels.forEach((label, index) => {
+                if (filter && !label.toLowerCase().includes(filter)) return;
+                const row = document.createElement('tr');
+                const value = data.values[index];
+                row.innerHTML = `<td>${label}</td><td>${formatValue(metric, value)}</td>`;
+                tableBody.appendChild(row);
+                hasRows = true;
+            });
+
+            if (!hasRows) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="2" class="empty-cell">Sem resultados</td>';
+                tableBody.appendChild(row);
+            }
+        }
+
+        [metricSelect, periodSelect].forEach(el => el.addEventListener('change', renderTable));
+        tableSearch.addEventListener('input', renderTable);
+        renderTable();
+    </script>
+</body>
+</html>
