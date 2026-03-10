@@ -4,14 +4,27 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+    (function(){
+        var theme = localStorage.getItem('theme');
+        if(!theme){
+            if(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches){
+                theme = 'light';
+            } else {
+                theme = 'dark';
+            }
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+    })();
+    </script>
     <title>Task Monitor — Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=1">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=3">
 </head>
 <body>
-    <!-- HEADER -->
+    <!-- CABEÇALHO -->
     <header class="bar">
         <div class="bar-brand">
             <div class="bar-logo">
@@ -25,6 +38,7 @@
             <h1>Task Monitor</h1>
         </div>
         <div class="top-actions">
+            <button id="theme-toggle" class="btn btn-ghost theme-toggle" title="Alternar tema"></button>
             <span class="user-badge">
                 <span class="user-avatar">{{ request.user.username|first|upper }}</span>
                 <span class="user-name">{{ request.user.username }}</span>
@@ -38,16 +52,16 @@
         </div>
     </header>
 
-    <!-- MAIN -->
+    <!-- CORPO PRINCIPAL -->
     <main class="dashboard">
-        <!-- DASHBOARD TOP -->
+        <!-- TOPO DO DASHBOARD -->
         <div class="dash-top">
             <div class="dash-title">
                 <h2>Dashboard</h2>
                 <p class="dash-subtitle">Resumo de desempenho dos últimos 14 dias</p>
             </div>
             
-            <!-- KPI CARDS -->
+            <!-- CARTÕES KPI -->
             <div class="dash-summary">
                 <div class="stat-card">
                     <span class="stat-label">� Horas Totais</span>
@@ -72,7 +86,7 @@
             </div>
         </div>
 
-        <!-- NAVIGATION TABS -->
+        <!-- ABAS DE NAVEGAÇÃO -->
         <div class="nav-tabs" id="navTabs">
             <button class="nav-tab active" onclick="switchTab('overview', this)">📊 Visão Geral</button>
             <button class="nav-tab" onclick="switchTab('details', this)">📈 Detalhes</button>
@@ -80,7 +94,7 @@
             <button class="nav-tab" onclick="switchTab('planned', this)">📅 Atividades Previstas</button>
         </div>
 
-        <!-- TAB: OVERVIEW -->
+        <!-- ABA: VISÃO GERAL -->
         <div id="tab-overview" class="tab-content">
             <div class="dash-grid">
                 <section class="panel">
@@ -118,7 +132,7 @@
             </div>
         </div>  <!-- fim tab-overview -->
 
-        <!-- TAB: DETAILS -->
+        <!-- ABA: DETALHES -->
         <div id="tab-details" class="tab-content" style="display: none;">
             <section class="panel table-panel">
                 <div class="table-head">
@@ -140,7 +154,7 @@
             </section>
         </div>
 
-        <!-- TAB: DELIVERABLES -->
+        <!-- ABA: ENTREGÁVEIS -->
         <div id="tab-deliverables" class="tab-content" style="display: none;">
             <section class="panel">
                 <div style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
@@ -173,7 +187,7 @@
             </section>
         </div>
 
-        <!-- TAB: PLANNED ACTIVITIES -->
+        <!-- ABA: ATIVIDADES PREVISTAS -->
         <div id="tab-planned" class="tab-content" style="display: none;">
             <section class="panel">
                 <div style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
@@ -206,18 +220,19 @@
         </div>
     </main>
 
-    <!-- DATA SCRIPT -->
+    <!-- SCRIPT DE DADOS -->
     {{ dashboard_data|json_script:"dashboard-data" }}
     {{ profile_data|json_script:"profile-data" }}
     {{ team_activities|json_script:"team-activities-data" }}
 
-    <!-- DATA SCRIPTS FOR deliverables and planned -->
+    <!-- SCRIPTS DE DADOS PARA entregáveis e previstos -->
     {{ deliverables|json_script:"deliverables-data" }}
     {{ planned|json_script:"planned-data" }}
 
     <!-- CHART.JS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="{% static 'js/dashboard.js' %}?v=2.0"></script>
+    <script src="{% static 'js/theme.js' %}"></script>
 
     <!-- Modal: Entregável -->
     <div id="deliverable-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="deliverableModalTitle">

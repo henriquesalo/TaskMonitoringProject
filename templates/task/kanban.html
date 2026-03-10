@@ -4,11 +4,24 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+    (function(){
+        var theme = localStorage.getItem('theme');
+        if(!theme){
+            if(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches){
+                theme = 'light';
+            } else {
+                theme = 'dark';
+            }
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+    })();
+    </script>
     <title>Task Monitoring</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/kanban.css' %}?v=4">
+    <link rel="stylesheet" href="{% static 'css/kanban.css' %}?v=5">
 </head>
 <body>
 
@@ -25,6 +38,7 @@
             <h1>Task Monitor</h1>
         </div>
         <div class="top-actions">
+            <button id="theme-toggle" class="btn btn-ghost theme-toggle" title="Alternar tema"></button>
             <span class="user-badge">
                 <span class="user-avatar">{{ request.user.username|first|upper }}</span>
                 <span class="user-name">{{ request.user.username }}</span>
@@ -316,5 +330,6 @@
 
     <script src="{% static 'js/script.js' %}?v=4.1"></script>
     <script src="{% static 'js/draganddrop.js' %}?v=4.1"></script>
+    <script src="{% static 'js/theme.js' %}?v=1.1"></script>
 </body>
 </html>

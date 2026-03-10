@@ -1,5 +1,13 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+.theme-toggle {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 1000;
+    cursor: pointer;
+}
+
 :root {
     --bg:         #080c14;
     --surface:    #0e1420;
@@ -17,6 +25,18 @@
     --shadow:     0 24px 64px rgba(0,0,0,.6);
 }
 
+/* Substituições do tema claro */
+[data-theme="light"] {
+    --bg: #ffffff;
+    --surface: #f5f5f5;
+    --surface-2: #e0e0e0;
+    --border: #cccccc;
+    --border-2: #bbbbbb;
+    --text: #1a1a1a;
+    --text-2: #555555;
+    --text-3: #888888;
+}
+
 body {
     font-family: 'DM Sans', sans-serif;
     background: var(--bg);
@@ -30,7 +50,7 @@ body {
     overflow: hidden;
 }
 
-/* grid background */
+/* fundo em grade */
 .bg-grid {
     position: fixed;
     inset: 0;
@@ -42,7 +62,7 @@ body {
     z-index: 0;
 }
 
-/* Glow blob */
+/* mancha de brilho */
 body::before {
     content: '';
     position: fixed;
@@ -56,7 +76,7 @@ body::before {
     z-index: 0;
 }
 
-/* Card */
+/* Cartão */
 .card {
     position: relative;
     z-index: 1;
@@ -78,7 +98,7 @@ body::before {
     to   { opacity: 1; transform: none; }
 }
 
-/* Brand */
+/* Marca */
 .brand {
     display: flex;
     align-items: center;
@@ -106,7 +126,7 @@ body::before {
     color: var(--text);
 }
 
-/* Header */
+/* Cabeçalho */
 .card-header {
     text-align: center;
     display: flex;
@@ -130,7 +150,7 @@ body::before {
     color: var(--text-3);
 }
 
-/* Alert */
+/* Alerta */
 .alert {
     display: flex;
     align-items: flex-start;
@@ -193,7 +213,7 @@ input:focus {
 
 input::placeholder { color: var(--text-3); }
 
-/* Django form errors  */
+/* Erros de formulário Django */
 .django-form input { width: 100%; }
 
 .field-error input {
@@ -218,7 +238,7 @@ input::placeholder { color: var(--text-3); }
     color: #fca5a5;
 }
 
-/* Submit button */
+/* Botão de envio */
 .btn-submit {
     display: flex;
     align-items: center;
@@ -241,7 +261,7 @@ input::placeholder { color: var(--text-3); }
 .btn-submit:hover  { background: #2563eb; }
 .btn-submit:active { transform: scale(.99); }
 
-/* Footer */
+/* Rodapé */
 .card-footer {
     display: flex;
     align-items: center;

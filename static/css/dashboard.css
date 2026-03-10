@@ -1,3 +1,4 @@
+
 :root {
   --bg: #080c14;
   --surface: #0e1420;
@@ -19,6 +20,29 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
+/* Substituições do tema claro */
+html[data-theme="light"],
+[data-theme="light"] {
+  --bg: #ffffff !important;
+  --surface: #f5f5f5 !important;
+  --surface2: #e0e0e0 !important;
+  --border: #cccccc !important;
+  --border2: #bbbbbb !important;
+  --text: #1a1a1a !important;
+  --text2: #555555 !important;
+  --muted: #888888 !important;
+  --accent: #3b82f6 !important;
+  --accent-lt: #1d3461 !important;
+  --success: #22c55e !important;
+  --success-lt: #1a4d2e !important;
+  --warning: #f59e0b !important;
+  --warning-lt: #4d3a1a !important;
+  --danger: #ef4444 !important;
+  --danger-lt: #4d1a1a !important;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.45) !important;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -32,7 +56,7 @@ body {
   min-height: 100vh;
 }
 
-/* HEADER */
+/* CABEÇALHO */
 .bar {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -156,14 +180,14 @@ body {
   border-color: var(--success);
 }
 
-/* MAIN */
+/* PRINCIPAL */
 .dashboard {
   max-width: 1380px;
   margin: 0 auto;
   padding: 32px;
 }
 
-/* DASHBOARD TOP */
+/* TOPO DO DASHBOARD */
 .dash-top {
   margin-bottom: 32px;
 }
@@ -226,7 +250,7 @@ body {
   line-height: 1;
 }
 
-/* NAV TABS */
+/* ABAS DE NAVEGAÇÃO */
 .nav-tabs {
   display: flex;
   gap: 4px;
@@ -262,7 +286,7 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-/* GRID LAYOUT */
+/* LAYOUT EM GRADE */
 .dash-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -303,7 +327,7 @@ body {
   max-height: 250px;
 }
 
-/* TABLE PANEL */
+/* PAINEL DE TABELA */
 .table-panel {
   grid-column: 1 / -1;
   margin-bottom: 24px;
@@ -409,7 +433,7 @@ body {
   color: var(--muted);
 }
 
-/* ANIMATIONS */
+/* ANIMAÇÕES */
 @keyframes fadeUp {
   from {
     opacity: 0;
@@ -425,7 +449,7 @@ body {
   animation: fadeUp 0.4s ease;
 }
 
-/* RESPONSIVE */
+/* RESPONSIVO */
 @media (max-width: 900px) {
   .dash-grid {
     grid-template-columns: 1fr;
@@ -460,7 +484,7 @@ body {
   }
 }
 
-/* SCROLLBAR */
+/* BARRA DE ROLAGEM */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -479,7 +503,7 @@ body {
   background: var(--muted);
 }
 
-/* DELIVERABLES E PLANNED */
+/* ENTREGÁVEIS E PLANEJADOS */
 .deliverable-card,
 .planned-card {
   background: var(--surface2);
@@ -531,7 +555,7 @@ body {
   border: 1px solid var(--warning);
 }
 
-/* MODALS */
+/* MODAIS */
 .modal {
   position: fixed;
   inset: 0;
@@ -617,7 +641,7 @@ body {
   gap: 16px;
 }
 
-/* FIELDS */
+/* CAMPOS */
 .field {
   display: flex;
   flex-direction: column;
@@ -703,4 +727,7 @@ select {
 
 .modal-actions .btn-danger {
   margin-left: auto;
+}
+.theme-toggle {
+  cursor: pointer;
 }

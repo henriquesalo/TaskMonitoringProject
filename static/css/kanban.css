@@ -22,7 +22,20 @@
     --transition:  .18s cubic-bezier(.4,0,.2,1);
 }
 
-/* Typography */
+/* Substituições do tema claro */
+html[data-theme="light"],
+[data-theme="light"] {
+    --bg: #ffffff !important;
+    --surface: #f5f5f5 !important;
+    --surface-2: #e0e0e0 !important;
+    --border: #cccccc !important;
+    --border-2: #bbbbbb !important;
+    --text: #1a1a1a !important;
+    --text-2: #555555 !important;
+    --text-3: #888888 !important;
+}
+
+/* Tipografia */
 body {
     font-family: 'DM Sans', sans-serif;
     background: var(--bg);
@@ -35,7 +48,7 @@ body {
 
 h1, h2, h3 { font-family: 'Syne', sans-serif; letter-spacing: -0.02em; }
 
-/* Header */
+/* Cabeçalho */
 .bar {
     display: flex;
     align-items: center;
@@ -85,7 +98,7 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; letter-spacing: -0.02em; }
 
 .user-name { font-size: 13px; font-weight: 500; color: var(--text-2); }
 
-/* Buttons */
+/* Botões */
 .btn {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 7px 14px; border-radius: 8px;
@@ -107,7 +120,7 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; letter-spacing: -0.02em; }
 .btn-danger { background: rgba(239,68,68,.15); color: var(--red); border-color: rgba(239,68,68,.3); }
 .btn-danger:hover { background: rgba(239,68,68,.28); }
 
-/* Board */
+/* Quadro */
 .board {
     display: flex; gap: 14px; padding: 20px;
     align-items: flex-start;
@@ -119,7 +132,7 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; letter-spacing: -0.02em; }
 .board::-webkit-scrollbar-track { background: transparent; }
 .board::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
 
-/* Column */
+/* Coluna */
 .col {
     flex: 1 1 270px; min-width: 270px; max-width: 340px;
     background: var(--surface); border: 1px solid var(--border);
@@ -162,7 +175,7 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; letter-spacing: -0.02em; }
     gap: 8px; min-height: 80px;
 }
 
-/* Card/tasks */
+/* Cards/tarefas */
 .card {
     background: var(--surface-2);
     border: 1px solid var(--border);
@@ -188,7 +201,7 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; letter-spacing: -0.02em; }
 .card-done    { border-left: 3px solid var(--green); opacity: .82; }
 .card-blocked { border-left: 3px solid var(--red); }
 
-/* Card inner layout */
+/* Layout interno do card */
 .card-top {
     display: flex; align-items: flex-start;
     justify-content: space-between; gap: 8px;
@@ -214,7 +227,7 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; letter-spacing: -0.02em; }
     -webkit-box-orient: vertical; overflow: hidden;
 }
 
-/* Card bottom */
+/* Parte inferior do card */
 .card-info-row {
     display: flex;
     align-items: center;
@@ -225,7 +238,7 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; letter-spacing: -0.02em; }
     flex-wrap: nowrap;
 }
 
-/* Cards info esquerda */
+/* Informações dos cards à esquerda */
 .card-info-item {
     display: flex;
     align-items: center;
@@ -248,7 +261,7 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; letter-spacing: -0.02em; }
     white-space: nowrap;
 }
 
-/* Done Card */
+/* Card concluído */
 .card-info-row--done {
     align-items: flex-end;
 }
@@ -272,14 +285,14 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; letter-spacing: -0.02em; }
 .badge-green   { background: rgba(34,197,94,.1);  border: 1px solid rgba(34,197,94,.25);  color: var(--green); }
 .badge-red     { background: rgba(239,68,68,.1);   border: 1px solid rgba(239,68,68,.25);  color: var(--red); }
 
-/* Drag placeholder */
+/* Espaço reservado para arrastar */
 .drop-placeholder {
     height: 80px; border: 2px dashed rgba(59,130,246,.3);
     border-radius: var(--radius); background: rgba(59,130,246,.03);
     pointer-events: none;
 }
 
-/* Empty state */
+/* Estado vazio */
 .col-empty {
     display: flex; flex-direction: column; align-items: center;
     gap: 8px; padding: 24px 16px; color: var(--text-3); text-align: center;
@@ -375,7 +388,7 @@ select {
 
 .confirm-text { font-size: 14px; color: var(--text-2); line-height: 1.55; margin-bottom: 4px; }
 
-/* Toast */
+/* Notificação */
 .toast {
     position: fixed; bottom: 24px; right: 24px; z-index: 999;
     background: var(--surface-2); border: 1px solid var(--border-2);
@@ -543,4 +556,8 @@ select {
     .modal.show { padding-top: 20px; align-items: flex-end; }
     .modal-card { border-radius: var(--radius-lg) var(--radius-lg) 0 0; max-width: 100%; }
     .field-row { flex-direction: column; }
+}
+
+.theme-toggle {
+  cursor: pointer;
 }

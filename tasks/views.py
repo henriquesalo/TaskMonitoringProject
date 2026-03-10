@@ -182,11 +182,11 @@ def build_profile_data(tasks):
     }
 
 def build_team_activities():
-    """Agrupa tarefas por título para mostrar tempo total e por perfil
+    """Agrupa tarefas por título para mostrar tempo total e por perfil.
 
-    Originally this was limited to the last 14 days, but users expect all
-    completed activities to appear (regardless of when they were done).  The
-    filtering logic has therefore been removed.
+    Originalmente isto era limitado aos últimos 14 dias, mas os usuários
+    esperam que todas as atividades concluídas apareçam (independentemente de
+    quando foram feitas). Por isso a lógica de filtragem foi removida.
     """
     # fetch every finished task that has both start/end times
     all_tasks = Task.objects.filter(

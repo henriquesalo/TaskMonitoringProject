@@ -4,6 +4,19 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+    (function(){
+        var theme = localStorage.getItem('theme');
+        if(!theme){
+            if(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches){
+                theme = 'light';
+            } else {
+                theme = 'dark';
+            }
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+    })();
+    </script>
     <title>Admin — Squad Status</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,7 +24,7 @@
     <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=1">
 </head>
 <body>
-    <!-- HEADER -->
+    <!-- CABEÇALHO -->
     <header class="bar">
         <div class="bar-brand">
             <div class="bar-logo">
@@ -25,6 +38,7 @@
             <h1>Squad Status - Admin</h1>
         </div>
         <div class="top-actions">
+            <button id="theme-toggle" class="btn btn-ghost theme-toggle" title="Alternar tema"></button>
             <a class="btn btn-ghost" href="{% url 'admin:index' %}">Voltar ao Admin</a>
             <a class="btn btn-ghost" href="{% url 'logout' %}">Sair</a>
         </div>
@@ -41,7 +55,7 @@
         {{ deliverables|json_script:"deliverables-data" }}
         {{ planned|json_script:"planned-data" }}
 
-<!-- reuse same KPI cards as regular dashboard (dashboard_data available) -->
+<!-- reutiliza os mesmos cartões de KPI do dashboard regular (dashboard_data disponível) -->
 <div class="dash-summary">
     <div class="stat-card">
         <span class="stat-label">🕒 Horas Totais</span>
@@ -65,16 +79,16 @@
     </div>
 </div>
 <br>
-<!-- NAVIGATION TABS -->
+<!-- ABAS DE NAVEGAÇÃO -->
 <div class="nav-tabs" id="navTabs">
     <button class="nav-tab active" onclick="switchTab('overview', this)">📊 Visão Geral</button>
     <button class="nav-tab" onclick="switchTab('deliverables', this)">🏆 Entregáveis</button>
     <button class="nav-tab" onclick="switchTab('planned', this)">📅 Atividades Previstas</button>
 </div>
 
-<!-- TAB: OVERVIEW -->
+<!-- ABA: VISÃO GERAL -->
 <div id="tab-overview" class="tab-content">
-    <!-- Charts area: reuse id hoursProfile/hoursWeekday but with aggregated data -->
+    <!-- Área de gráficos: reutiliza id hoursProfile/hoursWeekday mas com dados agregados -->
     <div class="dash-grid">
         <section class="panel">
             <h3>Horas por Perfil</h3>
@@ -86,7 +100,7 @@
         </section>
     </div>
 
-    <!-- TEAM ACTIVITIES TABLE -->
+    <!-- TABELA DE ATIVIDADES DO TIME -->
     <section class="panel table-panel">
         <div class="table-head">
             <h3>📊 Atividades do Time</h3>
@@ -115,7 +129,7 @@
     </section>
 </div>
 
-<!-- TAB: DELIVERABLES -->
+<!-- ABA: ENTREGÁVEIS -->
 <div id="tab-deliverables" class="tab-content" style="display: none;">
     <section class="panel">
         <div style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
@@ -148,7 +162,7 @@
     </section>
 </div>
 
-<!-- TAB: PLANNED ACTIVITIES -->
+<!-- ABA: ATIVIDADES PREVISTAS -->
 <div id="tab-planned" class="tab-content" style="display: none;">
     <section class="panel">
         <div style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
@@ -245,5 +259,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="{% static 'js/dashboard.js' %}?v=3.0"></script>
+    <script src="{% static 'js/theme.js' %}"></script>
 </body>
 </html>
