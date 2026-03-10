@@ -3,7 +3,7 @@ from django.contrib import messages # importando messages para poder mostrar men
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required # decorators = funcao que envolve outra. Nesse caso se nao tiver logado bloqueia acesso.
-from tasks.models import Task # importando o modelo de task para poder filtrar as tasks por usuario.
+from tasks.models import Task, Deliverable, PlannedActivity # importando os modelos
 from tasks.forms import TaskForm, RegistrationForm # importando o form da task e o de registro.
 from django.utils import timezone # importando timezone para poder usar no createTask e respeita o timezone do projeto.
 from django.http import JsonResponse, HttpResponse # importando JsonResponse para poder retornar um json no updateTaskStatus e HttpResponse para poder enviar arquivos ao navegador.
@@ -21,6 +21,13 @@ def build_dashboard_data(tasks):
     daily_hours = {d: 0 for d in daily_dates}
     daily_done = {d: 0 for d in daily_dates}
 
+    # total of all completed tasks (all-time)
+    total_done_all = len(done_tasks)
+
+    # additional metrics
+    launches = len(tracked_tasks)
+    distinct_activities = len({t.title for t in tracked_tasks})
+
     for task in tracked_tasks:
         end_date = timezone.localdate(task.end_time)
         if end_date in daily_hours:
@@ -32,7 +39,8 @@ def build_dashboard_data(tasks):
             daily_done[end_date] += 1
 
     daily_labels = [d.strftime("%d/%m") for d in daily_dates]
-    daily_hours_values = [round(daily_hours[d], 2) for d in daily_dates]
+    # preserve full precision in values, rounding happens only for presentation
+    daily_hours_values = [daily_hours[d] for d in daily_dates]
     daily_done_values = [daily_done[d] for d in daily_dates]
 
     week_starts = []
@@ -56,7 +64,7 @@ def build_dashboard_data(tasks):
             weekly_done[week_start] += 1
 
     weekly_labels = [f"Sem {d.isocalendar().week:02d}/{d.isocalendar().year}" for d in week_starts]
-    weekly_hours_values = [round(weekly_hours[d], 2) for d in week_starts]
+    weekly_hours_values = [weekly_hours[d] for d in week_starts]
     weekly_done_values = [weekly_done[d] for d in week_starts]
 
     month_keys = []
@@ -85,11 +93,37 @@ def build_dashboard_data(tasks):
             monthly_done[key] += 1
 
     monthly_labels = [f"{m:02d}/{y}" for (y, m) in month_keys]
-    monthly_hours_values = [round(monthly_hours[k], 2) for k in month_keys]
+    monthly_hours_values = [monthly_hours[k] for k in month_keys]
     monthly_done_values = [monthly_done[k] for k in month_keys]
 
-    total_hours = round(sum(daily_hours_values), 2)
-    total_done = sum(daily_done_values)
+    # Totais exatos baseados no período de 14 dias pra horas,
+    # mas número de tarefas concluidas é global (len(done_tasks)).
+    total_hours = sum(daily_hours_values)
+    total_done = total_done_all
+    
+    # Média diária considerando apenas dias com horas registradas
+    days_with_work = sum(1 for h in daily_hours_values if h > 0)
+    avg_daily = total_hours / max(days_with_work, 1)
+
+    # exposable totals
+    days_worked = days_with_work
+    launches = launches
+    distinct_activities = distinct_activities
+    
+    # Taxa de conclusão: tarefas finalizadas no período dividido pelo total de
+    # tarefas que tiveram fim dentro do mesmo intervalo.
+    period_start = daily_dates[0]
+    period_end = daily_dates[-1]
+    tasks_in_period = tasks.filter(end_time__gte=timezone.make_aware(timezone.datetime.combine(period_start, timezone.datetime.min.time())),
+                                   end_time__lte=timezone.make_aware(timezone.datetime.combine(period_end, timezone.datetime.max.time())))
+    total_tracked_tasks = tasks_in_period.count()
+    completion_rate = round((total_done / max(total_tracked_tasks, 1)) * 100, 1) if total_tracked_tasks > 0 else 0
+
+    # helper to format hours
+    def fmt(h):
+        h_int = int(h)
+        mins = int(round((h - h_int) * 60))
+        return f"{h_int:02d}:{mins:02d}"
 
     return {
         'hours': {
@@ -104,9 +138,112 @@ def build_dashboard_data(tasks):
         },
         'totals': {
             'hours': total_hours,
+            'hours_hhmm': fmt(total_hours),
             'done': total_done,
+            'avg_daily': avg_daily,
+            'avg_daily_hhmm': fmt(avg_daily),
+            'completion_rate': int(completion_rate),
+            'launches': launches,
+            'days_worked': days_worked,
+            'distinct_activities': distinct_activities,
         }
     }
+
+def build_profile_data(tasks):
+    """Retorna a distribuição de horas por atividade **do usuário atual** e
+    o total por dia da semana (últimos 14 dias).
+    """
+    today = timezone.localdate()
+    week_days = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom']
+    # apenas tarefas que possuem tempos válidos e pertencem ao usuário
+    valid = tasks.filter(end_time__isnull=False, start_time__isnull=False)
+
+    activity_hours = {}
+    weekday_hours = {d: 0 for d in week_days}
+
+    for t in valid:
+        h = t.calculate_worked_hours()
+        activity_hours[t.title] = activity_hours.get(t.title, 0) + h
+
+        end_date = timezone.localdate(t.end_time)
+        if end_date >= today - timedelta(days=13):
+            wd = week_days[end_date.weekday()]
+            weekday_hours[wd] += h
+
+    activity_labels = list(activity_hours.keys())
+    activity_values = [round(activity_hours[l], 2) for l in activity_labels]
+
+    weekday_labels = week_days
+    weekday_values = [round(weekday_hours[d], 2) for d in weekday_labels]
+
+    return {
+        'activity': {'labels': activity_labels, 'values': activity_values},
+        'weekday': {'labels': weekday_labels, 'values': weekday_values}
+    }
+
+def build_team_activities():
+    """Agrupa tarefas por título para mostrar tempo total e por perfil
+
+    Originally this was limited to the last 14 days, but users expect all
+    completed activities to appear (regardless of when they were done).  The
+    filtering logic has therefore been removed.
+    """
+    # fetch every finished task that has both start/end times
+    all_tasks = Task.objects.filter(
+        status='done',
+        end_time__isnull=False,
+        start_time__isnull=False,
+    )
+
+    activities = {}
+    for task in all_tasks:
+        title = task.title
+        hours = task.calculate_worked_hours()
+        user_name = task.user.get_full_name() or task.user.username
+
+        if title not in activities:
+            activities[title] = {
+                'total': 0,
+                'by_user': {}
+            }
+
+        activities[title]['total'] += hours
+        if user_name not in activities[title]['by_user']:
+            activities[title]['by_user'][user_name] = 0
+        activities[title]['by_user'][user_name] += hours
+
+    return activities
+
+def build_user_activities(user):
+    """Agrupa tarefas por título para um usuário específico
+    
+    Mostra apenas as atividades daquele usuário, com informações de tempo total.
+    """
+    user_tasks = Task.objects.filter(
+        user=user,
+        status='done',
+        end_time__isnull=False,
+        start_time__isnull=False,
+    )
+
+    activities = {}
+    for task in user_tasks:
+        title = task.title
+        hours = task.calculate_worked_hours()
+
+        if title not in activities:
+            activities[title] = {
+                'total': 0,
+                'by_user': {}
+            }
+
+        activities[title]['total'] += hours
+        user_name = user.get_full_name() or user.username
+        if user_name not in activities[title]['by_user']:
+            activities[title]['by_user'][user_name] = 0
+        activities[title]['by_user'][user_name] += hours
+
+    return activities
 
 def userLogin(request):
     if request.method == 'POST':
@@ -147,6 +284,88 @@ def kanban(request): # criando funcao kanban que envia uma requisicao com o usua
         'blocked': tasks.filter(status='blocked'),
     }
     return render(request, 'task/kanban.html', context) # carrega o template, injeta os dados, gera html e envia a resposta http.
+
+
+@login_required
+def admin_dashboard(request):
+    """Visão consolidada de todos os usuários disponível apenas para superusers."""
+    if not request.user.is_superuser:
+        return redirect('admin:login')
+
+    tasks = Task.objects.all()
+    dashboard_data = build_dashboard_data(tasks)
+    # adiciona métricas extras para Admin
+    profiles = Task.objects.values('user').distinct().count()
+    total_hours = dashboard_data['totals']['hours']
+    avg_per_profile = total_hours / max(profiles, 1)
+    dashboard_data['totals']['profiles'] = profiles
+    dashboard_data['totals']['avg_per_profile_hhmm'] = f"{int(avg_per_profile)}h {int((avg_per_profile-int(avg_per_profile))*60):02d}m"
+
+    # perfil -> horas por usuário (para gráfico de pizza)
+    profile_hours = {}
+    valid = tasks.filter(end_time__isnull=False, start_time__isnull=False)
+    for t in valid:
+        name = t.user.get_full_name() or t.user.username
+        profile_hours[name] = profile_hours.get(name, 0) + t.calculate_worked_hours()
+    profile_labels = list(profile_hours.keys())
+    profile_values = [round(profile_hours[n], 2) for n in profile_labels]
+
+    # reutiliza agregação de atividades / day-of-week global
+    profile_data = {
+        'profile': {'labels': profile_labels, 'values': profile_values},
+        'weekday': build_profile_data(tasks).get('weekday', {})
+    }
+
+    team_activities = build_team_activities()
+
+    # Format team activities for JSON
+    team_activities_list = [
+        {
+            'title': title,
+            'total': round(data['total'], 2),
+            'by_user': {user: round(hours, 2) for user, hours in data['by_user'].items()}
+        }
+        for title, data in team_activities.items()
+    ]
+
+    # Get all deliverables with creator info
+    deliverables = [
+        {
+            'id': d.id,
+            'title': d.title,
+            'description': d.description or '',
+            'hours': d.hours,
+            'status': d.status,
+            'start_date': str(d.start_date) if d.start_date else None,
+            'end_date': str(d.end_date) if d.end_date else None,
+            'status_display': d.get_status_display(),
+            'hours_hhmm': d.hours_hhmm(),
+            'creator_username': d.user.username if d.user else None,
+        } for d in Deliverable.objects.all()
+    ]
+
+    # Get all planned activities with creator info
+    planned = [
+        {
+            'id': p.id,
+            'title': p.title,
+            'description': p.description or '',
+            'hours': p.hours,
+            'priority': p.priority,
+            'due_date': str(p.due_date) if p.due_date else None,
+            'priority_display': p.get_priority_display(),
+            'hours_hhmm': p.hours_hhmm(),
+            'creator_username': p.user.username if p.user else None,
+        } for p in PlannedActivity.objects.all()
+    ]
+
+    return render(request, 'admin_dashboard.html', {
+        'dashboard_data': dashboard_data,
+        'profile_data': profile_data,
+        'team_activities': team_activities_list,
+        'deliverables': deliverables,
+        'planned': planned,
+    })
 
 def createTask(request):
     if request.method == 'POST': # se o metodo for post, cria uma task com os dados do formulario
@@ -224,8 +443,53 @@ def updateTaskStatus(request, task_id):
 def dashboard(request):
     tasks = Task.objects.filter(user=request.user)
     dashboard_data = build_dashboard_data(tasks)
+    profile_data = build_profile_data(tasks)
+    user_activities = build_user_activities(request.user)    
+    # Todos os usuários podem ver entregáveis e atividades previstas (globais)
+    deliverables = [
+        {
+            'id': d.id,
+            'title': d.title,
+            'description': d.description or '',
+            'hours': d.hours,
+            'status': d.status,
+            'start_date': str(d.start_date) if d.start_date else None,
+            'end_date': str(d.end_date) if d.end_date else None,
+            'status_display': d.get_status_display(),
+            'hours_hhmm': d.hours_hhmm(),
+            'creator_name': d.user.get_full_name() if d.user else 'Sistema',
+        } for d in Deliverable.objects.all()
+    ]
+    planned = [
+        {
+            'id': p.id,
+            'title': p.title,
+            'description': p.description or '',
+            'hours': p.hours,
+            'priority': p.priority,
+            'due_date': str(p.due_date) if p.due_date else None,
+            'priority_display': p.get_priority_display(),
+            'hours_hhmm': p.hours_hhmm(),
+            'creator_name': p.user.get_full_name() if p.user else 'Sistema',
+        } for p in PlannedActivity.objects.all()
+    ]
+    
+    # Format user activities for JSON
+    user_activities_list = [
+        {
+            'title': title,
+            'total': round(data['total'], 2),
+            'by_user': {user: round(hours, 2) for user, hours in data['by_user'].items()}
+        }
+        for title, data in user_activities.items()
+    ]
+    
     return render(request, 'task/dashboard.html', {
-        'dashboard_data': dashboard_data
+        'dashboard_data': dashboard_data,
+        'profile_data': profile_data,
+        'team_activities': user_activities_list,
+        'deliverables': deliverables,
+        'planned': planned,
     })
 
 @login_required
@@ -259,6 +523,84 @@ def exportDashboardExcel(request):
 @login_required
 def exportTasksExcel(request):
     workbook = Workbook() # criando um novo arquivo excel vazio.
+
+
+# --- CRUD endpoints para administradores ---
+from django.views.decorators.http import require_http_methods
+
+@login_required
+@require_http_methods(['GET','POST'])
+def deliverable_list(request):
+    if request.method == 'GET':
+        data = list(Deliverable.objects.values())
+        return JsonResponse(data, safe=False)
+    # POST - qualquer usuário logado pode criar
+    payload = json.loads(request.body)
+    d = Deliverable.objects.create(
+        title=payload.get('title',''),
+        description=payload.get('description',''),
+        hours=payload.get('hours',0),
+        status=payload.get('status','ongoing'),
+        start_date=payload.get('start_date') or None,
+        end_date=payload.get('end_date') or None,
+        user=request.user
+    )
+    return JsonResponse({'id': d.id})
+
+@login_required
+@require_http_methods(['PUT','DELETE'])
+def deliverable_detail(request, id):
+    try:
+        d = Deliverable.objects.get(id=id)
+    except Deliverable.DoesNotExist:
+        return JsonResponse({'error':'not found'}, status=404)
+    if request.method == 'PUT':
+        payload = json.loads(request.body)
+        for field in ['title','description','hours','status','start_date','end_date']:
+            if field in payload:
+                setattr(d, field, payload[field])
+        d.save()
+        return JsonResponse({'success': True})
+    else:
+        d.delete()
+        return JsonResponse({'success': True})
+
+@login_required
+@require_http_methods(['GET','POST'])
+def planned_list(request):
+    if request.method == 'GET':
+        data = list(PlannedActivity.objects.values())
+        return JsonResponse(data, safe=False)
+    # POST - qualquer usuário logado pode criar
+    payload = json.loads(request.body)
+    p = PlannedActivity.objects.create(
+        title=payload.get('title',''),
+        description=payload.get('description',''),
+        hours=payload.get('hours',0),
+        priority=payload.get('priority','medium'),
+        due_date=payload.get('due_date') or None,
+        user=request.user
+    )
+    return JsonResponse({'id': p.id})
+
+@login_required
+@require_http_methods(['PUT','DELETE'])
+def planned_detail(request, id):
+    try:
+        p = PlannedActivity.objects.get(id=id)
+    except PlannedActivity.DoesNotExist:
+        return JsonResponse({'error':'not found'}, status=404)
+    if request.method == 'PUT':
+        payload = json.loads(request.body)
+        for field in ['title','description','hours','priority','due_date']:
+            if field in payload:
+                setattr(p, field, payload[field])
+        p.save()
+        return JsonResponse({'success': True})
+    else:
+        p.delete()
+        return JsonResponse({'success': True})
+
     worksheet = workbook.active # pegando a planilha ativa do arquivo excel.
     worksheet.title = 'Taferas do Usuário ' + request.user.username # definindo o nome da planilha.
 

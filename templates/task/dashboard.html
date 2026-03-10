@@ -7,10 +7,11 @@
     <title>Task Monitor — Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/kanban.css' %}?v=4">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=1">
 </head>
 <body>
+    <!-- HEADER -->
     <header class="bar">
         <div class="bar-brand">
             <div class="bar-logo">
@@ -37,194 +38,247 @@
         </div>
     </header>
 
+    <!-- MAIN -->
     <main class="dashboard">
+        <!-- DASHBOARD TOP -->
         <div class="dash-top">
             <div class="dash-title">
                 <h2>Dashboard</h2>
-                <p class="dash-subtitle">Resumo de horas trabalhadas e tarefas concluídas</p>
+                <p class="dash-subtitle">Resumo de desempenho dos últimos 14 dias</p>
             </div>
+            
+            <!-- KPI CARDS -->
             <div class="dash-summary">
                 <div class="stat-card">
-                    <span class="stat-label">Horas (14 dias)</span>
-                    <span class="stat-value">{{ dashboard_data.totals.hours }}</span>
+                    <span class="stat-label">� Horas Totais</span>
+                    <span class="stat-value">{{ dashboard_data.totals.hours_hhmm }}</span>
+                    <span class="stat-label" style="font-size: 12px; color: var(--text2); text-transform: none; letter-spacing: 0;">{{ dashboard_data.totals.launches }} lançamentos</span>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">Tasks concluídas (14 dias)</span>
-                    <span class="stat-value">{{ dashboard_data.totals.done }}</span>
+                    <span class="stat-label">📅 Dias Trabalhados</span>
+                    <span class="stat-value">{{ dashboard_data.totals.days_worked }}</span>
+                    <span class="stat-label" style="font-size: 12px; color: var(--text2); text-transform: none; letter-spacing: 0;">dias com registro</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">⏱️ Média Diária</span>
+                    <span class="stat-value">{{ dashboard_data.totals.avg_daily_hhmm }}</span>
+                    <span class="stat-label" style="font-size: 12px; color: var(--text2); text-transform: none; letter-spacing: 0;">horas por dia</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">📁 Atividades</span>
+                    <span class="stat-value">{{ dashboard_data.totals.distinct_activities }}</span>
+                    <span class="stat-label" style="font-size: 12px; color: var(--text2); text-transform: none; letter-spacing: 0;">distintas</span>
                 </div>
             </div>
         </div>
 
-        <div class="dash-grid">
-            <section class="panel">
-                <h3>Horas por dia</h3>
-                <div class="chart-box"><canvas id="hoursDaily"></canvas></div>
-            </section>
-            <section class="panel">
-                <h3>Horas por semana</h3>
-                <div class="chart-box"><canvas id="hoursWeekly"></canvas></div>
-            </section>
-            <section class="panel">
-                <h3>Horas por mês</h3>
-                <div class="chart-box"><canvas id="hoursMonthly"></canvas></div>
-            </section>
-            <section class="panel">
-                <h3>Tasks concluídas por dia</h3>
-                <div class="chart-box"><canvas id="doneDaily"></canvas></div>
-            </section>
-            <section class="panel">
-                <h3>Tasks concluídas por semana</h3>
-                <div class="chart-box"><canvas id="doneWeekly"></canvas></div>
-            </section>
-            <section class="panel">
-                <h3>Tasks concluídas por mês</h3>
-                <div class="chart-box"><canvas id="doneMonthly"></canvas></div>
+        <!-- NAVIGATION TABS -->
+        <div class="nav-tabs" id="navTabs">
+            <button class="nav-tab active" onclick="switchTab('overview', this)">📊 Visão Geral</button>
+            <button class="nav-tab" onclick="switchTab('details', this)">📈 Detalhes</button>
+            <button class="nav-tab" onclick="switchTab('deliverables', this)">🏆 Entregáveis</button>
+            <button class="nav-tab" onclick="switchTab('planned', this)">📅 Atividades Previstas</button>
+        </div>
+
+        <!-- TAB: OVERVIEW -->
+        <div id="tab-overview" class="tab-content">
+            <div class="dash-grid">
+                <section class="panel">
+                    <h3>Horas por Atividade</h3>
+                    <div class="chart-box"><canvas id="hoursProfile"></canvas></div>
+                </section>
+                <section class="panel">
+                    <h3>Horas por Dia da Semana</h3>
+                    <div class="chart-box"><canvas id="hoursWeekday"></canvas></div>
+                </section>
+                <section class="panel">
+                    <h3>Horas por Dia</h3>
+                    <div class="chart-box"><canvas id="hoursDaily"></canvas></div>
+                </section>
+                <section class="panel">
+                    <h3>Horas por Semana</h3>
+                    <div class="chart-box"><canvas id="hoursWeekly"></canvas></div>
+                </section>
+                <section class="panel">
+                    <h3>Horas por Mês</h3>
+                    <div class="chart-box"><canvas id="hoursMonthly"></canvas></div>
+                </section>
+                <section class="panel">
+                    <h3>Tasks por Dia</h3>
+                    <div class="chart-box"><canvas id="doneDaily"></canvas></div>
+                </section>
+                <section class="panel">
+                    <h3>Tasks por Semana</h3>
+                    <div class="chart-box"><canvas id="doneWeekly"></canvas></div>
+                </section>
+                <section class="panel">
+                    <h3>Tasks por Mês</h3>
+                    <div class="chart-box"><canvas id="doneMonthly"></canvas></div>
+                </section>
+            </div>
+        </div>  <!-- fim tab-overview -->
+
+        <!-- TAB: DETAILS -->
+        <div id="tab-details" class="tab-content" style="display: none;">
+            <section class="panel table-panel">
+                <div class="table-head">
+                    <h3>📊 Minhas Atividades</h3>
+                    <p>Minhas atividades concluídas e tempo investido</p>
+                </div>
+                <div class="table-wrap">
+                    <table class="data-table" id="teamActivitiesTable">
+                        <thead>
+                            <tr>
+                                <th>Atividade</th>
+                                <th>Total</th>
+                                <th>Por Perfil</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </section>
         </div>
 
-        <section class="panel table-panel">
-            <div class="table-head">
-                <div>
-                    <h3>Tabela de métricas</h3>
-                    <p class="dash-subtitle">Filtre por período e tipo de dado</p>
+        <!-- TAB: DELIVERABLES -->
+        <div id="tab-deliverables" class="tab-content" style="display: none;">
+            <section class="panel">
+                <div style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h3>🏆 Entregáveis</h3>
+                        <p style="font-size: 13px; color: var(--text2); margin-top: 4px;">Acompanhe os entregáveis do projeto com horas estimadas</p>
+                    </div>
+                    <button class="btn btn-success" onclick="openDeliverableModal()">+ Novo</button>
                 </div>
-            </div>
-            <div class="table-controls">
-                <div class="field">
-                    <label for="metricSelect">Indicador</label>
-                    <select id="metricSelect">
-                        <option value="hours">Horas trabalhadas</option>
-                        <option value="done">Tasks concluídas</option>
-                    </select>
+                <div id="deliverables-list" style="display: grid; gap: 16px;">
+                    {% for d in deliverables %}
+                    <div class="deliverable-card" data-id="{{ d.id }}" onclick="openDeliverableModal({{ d.id }})">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                            <div>
+                                <h4 style="font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px;">{{ d.title }}</h4>
+                                <p style="font-size: 12px; color: var(--text2);">{{ d.description }}</p>
+                            </div>
+                            <span class="status-badge status-{{ d.status }}">{{ d.status_display }}</span>
+                        </div>
+                        <div style="display: flex; gap: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+                            <span style="font-size: 12px; color: var(--text2);"><strong>⏱️ {{ d.hours_hhmm }}</strong></span>
+                            {% if d.start_date %}<span style="font-size: 12px; color: var(--muted);">Início: {{ d.start_date }}</span>{% endif %}
+                            {% if d.end_date %}<span style="font-size: 12px; color: var(--muted);">Fim: {{ d.end_date }}</span>{% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p>Nenhum entregável cadastrado.</p>
+                    {% endfor %}
                 </div>
-                <div class="field">
-                    <label for="periodSelect">Período</label>
-                    <select id="periodSelect">
-                        <option value="daily">Dia</option>
-                        <option value="weekly">Semana</option>
-                        <option value="monthly">Mês</option>
-                    </select>
+            </section>
+        </div>
+
+        <!-- TAB: PLANNED ACTIVITIES -->
+        <div id="tab-planned" class="tab-content" style="display: none;">
+            <section class="panel">
+                <div style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h3>📅 Atividades Previstas</h3>
+                        <p style="font-size: 13px; color: var(--text2); margin-top: 4px;">Planejamento de atividades para as próximas semanas</p>
+                    </div>
+                    <button class="btn btn-success" onclick="openPlannedModal()">+ Novo</button>
                 </div>
-                <div class="field">
-                    <label for="tableSearch">Buscar</label>
-                    <input id="tableSearch" type="text" placeholder="Filtrar período">
+                <div id="planned-list" style="display: grid; gap: 16px;">
+                    {% for p in planned %}
+                    <div class="planned-card" data-id="{{ p.id }}" onclick="openPlannedModal({{ p.id }})">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                            <div>
+                                <h4 style="font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px;">{{ p.title }}</h4>
+                                <p style="font-size: 12px; color: var(--text2);">{{ p.description }}</p>
+                            </div>
+                            <span class="status-badge status-ongoing">{{ p.priority_display }}</span>
+                        </div>
+                        <div style="display: flex; gap: 12px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap;">
+                            <span style="font-size: 12px; color: var(--text2);"><strong>⏱️ {{ p.hours_hhmm }}</strong> estimadas</span>
+                            {% if p.due_date %}<span style="font-size: 12px; color: var(--muted);">Prazo: {{ p.due_date }}</span>{% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p>Nenhuma atividade prevista.</p>
+                    {% endfor %}
                 </div>
-            </div>
-            <div class="table-wrap">
-                <table class="data-table" id="metricsTable">
-                    <thead>
-                        <tr>
-                            <th>Período</th>
-                            <th>Valor</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </section>
+            </section>
+        </div>
     </main>
 
+    <!-- DATA SCRIPT -->
     {{ dashboard_data|json_script:"dashboard-data" }}
+    {{ profile_data|json_script:"profile-data" }}
+    {{ team_activities|json_script:"team-activities-data" }}
+
+    <!-- DATA SCRIPTS FOR deliverables and planned -->
+    {{ deliverables|json_script:"deliverables-data" }}
+    {{ planned|json_script:"planned-data" }}
+
+    <!-- CHART.JS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script>
-        const dashboardData = JSON.parse(document.getElementById('dashboard-data').textContent);
-        const baseOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                x: { ticks: { color: '#8a9ab8' }, grid: { color: 'rgba(38,48,68,0.4)' } },
-                y: { ticks: { color: '#8a9ab8' }, grid: { color: 'rgba(38,48,68,0.4)' } }
-            }
-        };
+    <script src="{% static 'js/dashboard.js' %}?v=2.0"></script>
 
-        function renderLine(id, labels, values, color) {
-            const ctx = document.getElementById(id);
-            if (!ctx) return;
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [{
-                        data: values,
-                        borderColor: color,
-                        backgroundColor: color.replace('1)', '0.2)'),
-                        fill: true,
-                        tension: 0.3
-                    }]
-                },
-                options: baseOptions
-            });
-        }
+    <!-- Modal: Entregável -->
+    <div id="deliverable-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="deliverableModalTitle">
+        <div class="modal-backdrop" onclick="closeDeliverableModal()"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="deliverableModalTitle">Entregável</h2>
+                <button class="modal-close" onclick="closeDeliverableModal()" aria-label="Fechar">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="field"><label for="del-title">Título</label><input id="del-title" type="text" placeholder="Nome do entregável..."></div>
+                <div class="field"><label for="del-description">Descrição <span class="optional">opcional</span></label><textarea id="del-description" placeholder="Descreva o entregável..."></textarea></div>
+                <div class="field"><label for="del-hours">Horas <span class="optional">HH:MM</span></label><input id="del-hours" type="text" placeholder="1:30"></div>
+                <div class="field"><label for="del-status">Status</label><select id="del-status">
+                    <option value="ongoing">Em Progresso</option>
+                    <option value="done">Concluído</option>
+                    <option value="blocked">Bloqueado</option>
+                    <option value="review">Revisão</option>
+                </select></div>
+                <div class="field-row">
+                    <div class="field"><label for="del-start">Data Início</label><input id="del-start" type="date"></div>
+                    <div class="field"><label for="del-end">Data Fim</label><input id="del-end" type="date"></div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="saveDeliverable()">Salvar</button>
+                    <button class="btn btn-danger" onclick="deleteCurrentDeliverable()" id="del-delete-btn" style="margin-left: auto; display: none;">Excluir</button>
+                    <button class="btn btn-ghost" onclick="closeDeliverableModal()">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        function renderBar(id, labels, values, color) {
-            const ctx = document.getElementById(id);
-            if (!ctx) return;
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: [{
-                        data: values,
-                        backgroundColor: color.replace('1)', '0.35)'),
-                        borderColor: color,
-                        borderWidth: 1
-                    }]
-                },
-                options: baseOptions
-            });
-        }
-
-        renderLine('hoursDaily', dashboardData.hours.daily.labels, dashboardData.hours.daily.values, 'rgba(59,130,246,1)');
-        renderLine('hoursWeekly', dashboardData.hours.weekly.labels, dashboardData.hours.weekly.values, 'rgba(59,130,246,1)');
-        renderLine('hoursMonthly', dashboardData.hours.monthly.labels, dashboardData.hours.monthly.values, 'rgba(59,130,246,1)');
-
-        renderBar('doneDaily', dashboardData.done.daily.labels, dashboardData.done.daily.values, 'rgba(34,197,94,1)');
-        renderBar('doneWeekly', dashboardData.done.weekly.labels, dashboardData.done.weekly.values, 'rgba(34,197,94,1)');
-        renderBar('doneMonthly', dashboardData.done.monthly.labels, dashboardData.done.monthly.values, 'rgba(34,197,94,1)');
-
-        const metricSelect = document.getElementById('metricSelect');
-        const periodSelect = document.getElementById('periodSelect');
-        const tableSearch = document.getElementById('tableSearch');
-        const tableBody = document.querySelector('#metricsTable tbody');
-
-        function formatValue(metric, value) {
-            if (metric === 'hours') {
-                return value.toFixed(2).replace('.', ',');
-            }
-            return value;
-        }
-
-        function renderTable() {
-            const metric = metricSelect.value;
-            const period = periodSelect.value;
-            const data = dashboardData[metric][period];
-            const filter = tableSearch.value.trim().toLowerCase();
-
-            tableBody.innerHTML = '';
-            let hasRows = false;
-
-            data.labels.forEach((label, index) => {
-                if (filter && !label.toLowerCase().includes(filter)) return;
-                const row = document.createElement('tr');
-                const value = data.values[index];
-                row.innerHTML = `<td>${label}</td><td>${formatValue(metric, value)}</td>`;
-                tableBody.appendChild(row);
-                hasRows = true;
-            });
-
-            if (!hasRows) {
-                const row = document.createElement('tr');
-                row.innerHTML = '<td colspan="2" class="empty-cell">Sem resultados</td>';
-                tableBody.appendChild(row);
-            }
-        }
-
-        [metricSelect, periodSelect].forEach(el => el.addEventListener('change', renderTable));
-        tableSearch.addEventListener('input', renderTable);
-        renderTable();
-    </script>
+    <!-- Modal: Atividade Prevista -->
+    <div id="planned-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="plannedModalTitle">
+        <div class="modal-backdrop" onclick="closePlannedModal()"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="plannedModalTitle">Atividade Prevista</h2>
+                <button class="modal-close" onclick="closePlannedModal()" aria-label="Fechar">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="field"><label for="plan-title">Título</label><input id="plan-title" type="text" placeholder="Nome da atividade..."></div>
+                <div class="field"><label for="plan-description">Descrição <span class="optional">opcional</span></label><textarea id="plan-description" placeholder="Descreva a atividade..."></textarea></div>
+                <div class="field"><label for="plan-hours">Horas <span class="optional">HH:MM</span></label><input id="plan-hours" type="text" placeholder="1:30"></div>
+                <div class="field"><label for="plan-priority">Prioridade</label><select id="plan-priority">
+                    <option value="low">Baixa</option>
+                    <option value="medium">Média</option>
+                    <option value="high">Alta</option>
+                </select></div>
+                <div class="field"><label for="plan-due">Data Limite</label><input id="plan-due" type="date"></div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="savePlanned()">Salvar</button>
+                    <button class="btn btn-danger" onclick="deleteCurrentPlanned()" id="plan-delete-btn" style="margin-left: auto; display: none;">Excluir</button>
+                    <button class="btn btn-ghost" onclick="closePlannedModal()">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

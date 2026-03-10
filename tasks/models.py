@@ -91,3 +91,53 @@ class Task(models.Model): # models.Model indicia a classe base que sabe salvar a
 
     def __str__(self):
         return self.title # Retorna o titulo da task quando chamada. Caso contrario retornaria Task object (1) no admin por exemplo.
+
+# ---- novos modelos para dashboard do superadmin ----
+class Deliverable(models.Model):
+    STATUS_CHOICES = [
+        ('done', 'Concluído'),
+        ('ongoing', 'Em Progresso'),
+        ('blocked', 'Bloqueado'),
+        ('review', 'Revisão'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True) # Criando relacao para indicar que o deliverable pertence a um usuario. onDelete diz que caso o user seja deletado as tarefas dele sejam setadas como nulo.
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    hours = models.FloatField(default=0.0)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ongoing')
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def hours_hhmm(self):
+        h = int(self.hours)
+        m = int(round((self.hours - h) * 60))
+        return f"{h:02d}:{m:02d}"
+
+    def __str__(self):
+        return self.title
+
+class PlannedActivity(models.Model):
+    PRIORITY_CHOICES = [
+        ('low', 'Baixa'),
+        ('medium', 'Média'),
+        ('high', 'Alta'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True) # Criando relacao para indicar que a atividade planejada pertence a um usuario. onDelete diz que caso o user seja deletado as tarefas dele sejam setadas como nulo.
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    hours = models.FloatField(default=0.0)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
+    due_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=10, default='planned')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def hours_hhmm(self):
+        h = int(self.hours)
+        m = int(round((self.hours - h) * 60))
+        return f"{h:02d}:{m:02d}"
+
+    def __str__(self):
+        return self.title

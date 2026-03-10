@@ -1,0 +1,12 @@
+{% extends "admin/base_site.html" %}
+{% load static i18n %}
+
+{% block content %}
+    {{ block.super }}
+    <div class="module">
+        <h2>{% trans "Relatórios" %}</h2>
+        <ul>
+            <li><a href="{% url 'admin_dashboard' %}">{% trans "Dashboard Consolidado do Squad" %}</a></li>
+        </ul>
+    </div>
+{% endblock %}

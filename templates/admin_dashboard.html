@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin — Squad Status</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=1">
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="bar">
+        <div class="bar-brand">
+            <div class="bar-logo">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <rect x="1" y="1" width="7" height="10" rx="2" fill="currentColor" opacity="0.9"/>
+                    <rect x="1" y="13" width="7" height="6" rx="2" fill="currentColor" opacity="0.4"/>
+                    <rect x="10" y="1" width="9" height="6" rx="2" fill="currentColor" opacity="0.4"/>
+                    <rect x="10" y="9" width="9" height="10" rx="2" fill="currentColor" opacity="0.9"/>
+                </svg>
+            </div>
+            <h1>Squad Status - Admin</h1>
+        </div>
+        <div class="top-actions">
+            <a class="btn btn-ghost" href="{% url 'admin:index' %}">Voltar ao Admin</a>
+            <a class="btn btn-ghost" href="{% url 'logout' %}">Sair</a>
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <h2>Squad Status Report - Admin</h2>
+        <p>Visualização consolidada para superusuários</p><br>
+
+        <!-- dados em JSON para o script -->
+        {{ dashboard_data|json_script:"dashboard-data" }}
+        {{ profile_data|json_script:"profile-data" }}
+        {{ team_activities|json_script:"team-activities-data" }}
+        {{ deliverables|json_script:"deliverables-data" }}
+        {{ planned|json_script:"planned-data" }}
+
+<!-- reuse same KPI cards as regular dashboard (dashboard_data available) -->
+<div class="dash-summary">
+    <div class="stat-card">
+        <span class="stat-label">🕒 Horas Totais</span>
+        <span class="stat-value">{{ dashboard_data.totals.hours_hhmm }}</span>
+        <span class="stat-label" style="font-size: 12px; color: var(--text2);">{{ dashboard_data.totals.launches }} lançamentos</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">👤 Perfis Ativos</span>
+        <span class="stat-value">{{ dashboard_data.totals.profiles|default:0 }}</span>
+        <span class="stat-label" style="font-size: 12px; color: var(--text2);">membros com dados</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">⏱️ Média por Perfil</span>
+        <span class="stat-value">{{ dashboard_data.totals.avg_per_profile_hhmm }}</span>
+        <span class="stat-label" style="font-size: 12px; color: var(--text2);">horas por membro</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">📁 Atividades</span>
+        <span class="stat-value">{{ dashboard_data.totals.distinct_activities }}</span>
+        <span class="stat-label" style="font-size: 12px; color: var(--text2);">distintas no time</span>
+    </div>
+</div>
+<br>
+<!-- NAVIGATION TABS -->
+<div class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" onclick="switchTab('overview', this)">📊 Visão Geral</button>
+    <button class="nav-tab" onclick="switchTab('deliverables', this)">🏆 Entregáveis</button>
+    <button class="nav-tab" onclick="switchTab('planned', this)">📅 Atividades Previstas</button>
+</div>
+
+<!-- TAB: OVERVIEW -->
+<div id="tab-overview" class="tab-content">
+    <!-- Charts area: reuse id hoursProfile/hoursWeekday but with aggregated data -->
+    <div class="dash-grid">
+        <section class="panel">
+            <h3>Horas por Perfil</h3>
+            <div class="chart-box"><canvas id="hoursProfile"></canvas></div>
+        </section>
+        <section class="panel">
+            <h3>Horas por Dia da Semana</h3>
+            <div class="chart-box"><canvas id="hoursWeekday"></canvas></div>
+        </section>
+    </div>
+
+    <!-- TEAM ACTIVITIES TABLE -->
+    <section class="panel table-panel">
+        <div class="table-head">
+            <h3>📊 Atividades do Time</h3>
+            <p>Tempo total e por perfil de todas as atividades concluídas</p>
+        </div>
+        <div class="table-controls">
+            <div class="field">
+                <label for="profileFilter">Filtrar por perfil</label>
+                <select id="profileFilter">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table class="data-table" id="teamActivitiesTable">
+                <thead>
+                    <tr>
+                        <th>Atividade</th>
+                        <th>Total</th>
+                        <th>Por Perfil</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<!-- TAB: DELIVERABLES -->
+<div id="tab-deliverables" class="tab-content" style="display: none;">
+    <section class="panel">
+        <div style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h3>🏆 Entregáveis</h3>
+                <p style="font-size: 13px; color: var(--text2); margin-top: 4px;">Acompanhe os entregáveis do projeto com horas estimadas</p>
+            </div>
+            <button class="btn btn-success" onclick="openDeliverableModal()">+ Novo</button>
+        </div>
+        <div id="deliverables-list" style="display: grid; gap: 16px;">
+            {% for d in deliverables %}
+            <div class="deliverable-card" data-id="{{ d.id }}" onclick="openDeliverableModal({{ d.id }})">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px;">{{ d.title }}</h4>
+                        <p style="font-size: 12px; color: var(--text2);">{{ d.description }}</p>
+                    </div>
+                    <span class="status-badge status-{{ d.status }}">{{ d.status_display }}</span>
+                </div>
+                <div style="display: flex; gap: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+                    <span style="font-size: 12px; color: var(--text2);"><strong>⏱️ {{ d.hours_hhmm }}</strong></span>
+                    {% if d.start_date %}<span style="font-size: 12px; color: var(--muted);">Início: {{ d.start_date }}</span>{% endif %}
+                    {% if d.end_date %}<span style="font-size: 12px; color: var(--muted);">Fim: {{ d.end_date }}</span>{% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p>Nenhum entregável cadastrado.</p>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<!-- TAB: PLANNED ACTIVITIES -->
+<div id="tab-planned" class="tab-content" style="display: none;">
+    <section class="panel">
+        <div style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h3>📅 Atividades Previstas</h3>
+                <p style="font-size: 13px; color: var(--text2); margin-top: 4px;">Planejamento de atividades para as próximas semanas</p>
+            </div>
+            <button class="btn btn-success" onclick="openPlannedModal()">+ Novo</button>
+        </div>
+        <div id="planned-list" style="display: grid; gap: 16px;">
+            {% for p in planned %}
+            <div class="planned-card" data-id="{{ p.id }}" onclick="openPlannedModal({{ p.id }})">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px;">{{ p.title }}</h4>
+                        <p style="font-size: 12px; color: var(--text2);">{{ p.description }}</p>
+                    </div>
+                    <span class="status-badge status-ongoing">{{ p.priority_display }}</span>
+                </div>
+                <div style="display: flex; gap: 12px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap;">
+                    <span style="font-size: 12px; color: var(--text2);"><strong>⏱️ {{ p.hours_hhmm }}</strong> estimadas</span>
+                    {% if p.due_date %}<span style="font-size: 12px; color: var(--muted);">Prazo: {{ p.due_date }}</span>{% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p>Nenhuma atividade prevista.</p>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+    </main>
+
+    <!-- Modal: Entregável -->
+    <div id="deliverable-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="deliverableModalTitle">
+        <div class="modal-backdrop" onclick="closeDeliverableModal()"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="deliverableModalTitle">Entregável</h2>
+                <button class="modal-close" onclick="closeDeliverableModal()" aria-label="Fechar">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="field"><label for="del-title">Título</label><input id="del-title" type="text" placeholder="Nome do entregável..."></div>
+                <div class="field"><label for="del-description">Descrição <span class="optional">opcional</span></label><textarea id="del-description" placeholder="Descreva o entregável..."></textarea></div>
+                <div class="field"><label for="del-hours">Horas <span class="optional">HH:MM</span></label><input id="del-hours" type="text" placeholder="1:30"></div>
+                <div class="field"><label for="del-status">Status</label><select id="del-status">
+                    <option value="ongoing">Em Progresso</option>
+                    <option value="done">Concluído</option>
+                    <option value="blocked">Bloqueado</option>
+                    <option value="review">Revisão</option>
+                </select></div>
+                <div class="field-row">
+                    <div class="field"><label for="del-start">Data Início</label><input id="del-start" type="date"></div>
+                    <div class="field"><label for="del-end">Data Fim</label><input id="del-end" type="date"></div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="saveDeliverable()">Salvar</button>
+                    <button class="btn btn-danger" onclick="deleteCurrentDeliverable()" id="del-delete-btn" style="margin-left: auto; display: none;">Excluir</button>
+                    <button class="btn btn-ghost" onclick="closeDeliverableModal()">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Atividade Prevista -->
+    <div id="planned-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="plannedModalTitle">
+        <div class="modal-backdrop" onclick="closePlannedModal()"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="plannedModalTitle">Atividade Prevista</h2>
+                <button class="modal-close" onclick="closePlannedModal()" aria-label="Fechar">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="field"><label for="plan-title">Título</label><input id="plan-title" type="text" placeholder="Nome da atividade..."></div>
+                <div class="field"><label for="plan-description">Descrição <span class="optional">opcional</span></label><textarea id="plan-description" placeholder="Descreva a atividade..."></textarea></div>
+                <div class="field"><label for="plan-hours">Horas <span class="optional">HH:MM</span></label><input id="plan-hours" type="text" placeholder="1:30"></div>
+                <div class="field"><label for="plan-priority">Prioridade</label><select id="plan-priority">
+                    <option value="low">Baixa</option>
+                    <option value="medium">Média</option>
+                    <option value="high">Alta</option>
+                </select></div>
+                <div class="field"><label for="plan-due">Data Limite</label><input id="plan-due" type="date"></div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="savePlanned()">Salvar</button>
+                    <button class="btn btn-danger" onclick="deleteCurrentPlanned()" id="plan-delete-btn" style="margin-left: auto; display: none;">Excluir</button>
+                    <button class="btn btn-ghost" onclick="closePlannedModal()">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="{% static 'js/dashboard.js' %}?v=3.0"></script>
+</body>
+</html>
