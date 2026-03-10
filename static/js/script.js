@@ -1,5 +1,11 @@
 function openCreateTask() {
     const modal = document.getElementById('createTaskModal');
+    document.getElementById('c-title').value = '';
+    document.getElementById('c-description').value = '';
+    document.getElementById('c-status').value = 'todo';
+    document.getElementById('c-start').value = '';
+    document.getElementById('c-end').value = '';
+
     modal.classList.add('show');
     modal.setAttribute('aria-hidden', 'false');
     setTimeout(() => document.getElementById('c-title').focus(), 50);
