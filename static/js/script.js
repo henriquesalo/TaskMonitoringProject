@@ -19,14 +19,14 @@ function closeCreateTask() {
 
 function openUpdateTask(el) {
     const modal = document.getElementById('updateTaskModal');
-    const form  = document.getElementById('updateTaskForm');
+    const form = document.getElementById('updateTaskForm');
 
     form.setAttribute('action', el.dataset.updateUrl);
-    document.getElementById('u-title').value       = el.dataset.title       || '';
+    document.getElementById('u-title').value = el.dataset.title || '';
     document.getElementById('u-description').value = el.dataset.description || '';
-    document.getElementById('u-status').value      = el.dataset.status      || 'todo';
-    document.getElementById('u-start').value       = el.dataset.startTime   || '';
-    document.getElementById('u-end').value         = el.dataset.endTime     || '';
+    document.getElementById('u-status').value = el.dataset.status || 'todo';
+    document.getElementById('u-start').value = el.dataset.startTime || '';
+    document.getElementById('u-end').value = el.dataset.endTime || '';
 
     modal.dataset.taskId = el.dataset.id;
 
@@ -43,8 +43,8 @@ function closeUpdateTask() {
 
 function confirmDelete() {
     const updateModal = document.getElementById('updateTaskModal');
-    const taskId      = updateModal.dataset.taskId;
-    const deleteForm  = document.getElementById('deleteForm');
+    const taskId = updateModal.dataset.taskId;
+    const deleteForm = document.getElementById('deleteForm');
 
     deleteForm.setAttribute('action', '/kanban/deleteTask/' + taskId + '/');
 
@@ -105,9 +105,22 @@ document.addEventListener('keydown', function (e) {
 function showToast(message, type) {
     const toast = document.getElementById('toast');
     toast.textContent = message;
-    toast.className   = 'toast' + (type ? ' toast-' + type : '');
+    toast.className = 'toast' + (type ? ' toast-' + type : '');
     void toast.offsetWidth; // Reflow para reiniciar animação
     toast.classList.add('show');
     clearTimeout(toast._t);
     toast._t = setTimeout(() => toast.classList.remove('show'), 3000);
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    const filterToggle = document.getElementById('filter-toggle');
+    const colFilter = document.getElementById('col-filter');
+
+    if (filterToggle && colFilter) {
+        filterToggle.addEventListener('click', function (e) {
+            e.preventDefault();
+            colFilter.classList.toggle('show');
+            filterToggle.classList.toggle('active');
+        });
+    }
+});

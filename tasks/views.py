@@ -277,11 +277,20 @@ def registro(request):
 @login_required
 def kanban(request): # criando funcao kanban que envia uma requisicao com o usuario logado.
     tasks = Task.objects.filter(user=request.user) # Filtrando no banco para que cada usuario veja somente suas tasks.
+    
+    # Filtro para tarefas concluídas por data específica
+    filter_date = request.GET.get('filter_date')
+    
+    done_tasks = tasks.filter(status='done')
+    if filter_date and filter_date.strip():  # Verifica se não é vazio ou apenas espaços
+        done_tasks = done_tasks.filter(end_time__date=filter_date)
+    
     context = { # criando um dicionario HTML para filtrar as tasks por status
         'todo': tasks.filter(status='todo'),
         'doing': tasks.filter(status='doing'),
-        'done': tasks.filter(status='done'),
+        'done': done_tasks,
         'blocked': tasks.filter(status='blocked'),
+        'filter_date': filter_date if filter_date and filter_date.strip() else '',
     }
     return render(request, 'task/kanban.html', context) # carrega o template, injeta os dados, gera html e envia a resposta http.
 

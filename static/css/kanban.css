@@ -299,6 +299,57 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; letter-spacing: -0.02em; }
 }
 .col-empty p { font-size: 13px; }
 
+/* Filtro compacto na coluna */
+.col-filter {
+    padding: 8px 12px; background: var(--surface-2); border-bottom: 1px solid var(--border);
+    display: none; /* Escondido por padrão */
+    transition: all 0.3s ease;
+}
+.col-filter.show {
+    display: block;
+}
+.filter-form-compact {
+    display: flex; align-items: center; gap: 8px; justify-content: space-between;
+}
+.filter-inputs {
+    display: flex; align-items: center; gap: 4px;
+}
+.filter-inputs input {
+    padding: 4px 6px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text); font-size: 12px; width: 120px;
+}
+.filter-inputs input:focus {
+    outline: none; border-color: var(--green);
+}
+.filter-buttons {
+    display: flex; gap: 4px;
+}
+.btn-filter, .btn-clear {
+    padding: 4px 6px; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text-2); font-size: 12px; cursor: pointer;
+    text-decoration: none; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+}
+.btn-filter:hover, .btn-clear:hover {
+    background: var(--border); color: var(--text);
+}
+.btn-filter { color: var(--green); }
+.btn-clear { color: var(--red); }
+
+/* Botão de toggle do filtro */
+.btn-filter-toggle {
+    background: none; border: none; color: var(--text-2); cursor: pointer;
+    padding: 2px; margin-left: 8px; border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+}
+.btn-filter-toggle:hover {
+    background: var(--surface-2); color: var(--text);
+}
+.btn-filter-toggle.active {
+    background: var(--green); color: white;
+}
+
 /* Modais */
 .modal {
     position: fixed; inset: 0; z-index: 200;
